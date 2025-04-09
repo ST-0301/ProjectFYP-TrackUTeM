@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "322741159514",
+    "project_id": "trackutem-7c56e",
+    "storage_bucket": "trackutem-7c56e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:322741159514:android:7d9156a11f621e38ec7a63",
+        "android_client_info": {
+          "package_name": "com.example.trackutem"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAVfIyM6T17Op7ik0XLGvMyY_h4G_d7vY0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

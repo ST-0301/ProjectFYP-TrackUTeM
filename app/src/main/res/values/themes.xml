@@ -1,0 +1,20 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Theme.TrackUTeM" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Primary Colors -->
+        <item name="colorPrimary">@color/primaryBlue</item>
+        <item name="colorSecondary">@color/secondaryGreen</item>
+        <item name="colorTertiary">@color/tertiaryOrange</item>
+
+        <!-- Text Colors -->
+        <item name="android:textColorPrimary">@color/textPrimary</item>
+        <item name="android:textColorSecondary">@color/textSecondary</item>
+
+        <!-- Background Colors -->
+        <item name="colorSurface">@color/backgroundLight</item>
+        <item name="colorSurfaceVariant">@color/backgroundDark</item>
+
+        <!-- Error Color -->
+        <item name="colorError">@color/colorError</item>
+    </style>
+</resources>

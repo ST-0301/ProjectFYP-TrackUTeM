@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primaryBlue">#2563EB</color>  <!-- Vibrant, Energetic Blue (Trust) -->
+    <color name="secondaryGreen">#16A34A</color>  <!-- Deep Green (Eco-friendly) -->
+    <color name="tertiaryOrange">#F59E0B</color>  <!-- Orange (Highlights) -->
+
+    <!-- Text Colors -->
+    <color name="textPrimary">#1E293B</color>  <!-- Dark Gray (Good contrast) -->
+    <color name="textSecondary">#6B7280</color>  <!-- Light Gray (Subtle) -->
+
+    <!-- Background Colors -->
+    <color name="backgroundLight">#F3F4F6</color>  <!-- Light Gray Background -->
+    <color name="backgroundDark">#1F2937</color>  <!-- Dark Gray -->
+
+    <!-- Error Color -->
+    <color name="colorError">#D32F2F</color>  <!-- Red (Error) -->
+
+<!--    <color name="black">#FF000000</color>-->
+<!--    <color name="white">#FFFFFFFF</color>-->
+</resources>

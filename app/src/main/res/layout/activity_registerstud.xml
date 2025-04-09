@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/backgroundLight">
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        app:cardBackgroundColor="@android:color/white"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <ImageView
+                android:id="@+id/ivLogo"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="16dp"
+                android:src="@drawable/logo"
+                android:contentDescription="Logo" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:text="Create Account"
+                android:textColor="@color/backgroundDark"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/ilRegisterName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:hint="Full Name"
+                app:boxStrokeColor="@color/primaryBlue"
+                app:hintTextColor="@color/primaryBlue">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etRegisterName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:textColor="@color/backgroundDark"
+                    android:textSize="16sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/ilRegisterEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="Email"
+                app:boxStrokeColor="@color/primaryBlue"
+                app:hintTextColor="@color/primaryBlue">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etRegisterEmail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textEmailAddress"
+                    android:textColor="@color/backgroundDark"
+                    android:textSize="16sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/ilRegisterPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="Password"
+                app:boxStrokeColor="@color/primaryBlue"
+                app:hintTextColor="@color/primaryBlue"
+                app:passwordToggleEnabled="true"
+                app:passwordToggleTint="@color/primaryBlue">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etRegisterPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPassword"
+                    android:textColor="@color/backgroundDark"
+                    android:textSize="16sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <LinearLayout
+                android:id="@+id/llPasswordConditions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingTop="8dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/tvPasswordLength"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="• At least 8 characters"
+                    android:textColor="@color/colorError" />
+
+                <TextView
+                    android:id="@+id/tvPasswordUppercase"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="• At least 1 uppercase letter"
+                    android:textColor="@color/colorError" />
+
+                <TextView
+                    android:id="@+id/tvPasswordLowercase"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="• At least 1 lowercase letter"
+                    android:textColor="@color/colorError" />
+
+                <TextView
+                    android:id="@+id/tvPasswordNumber"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="• At least 1 number"
+                    android:textColor="@color/colorError" />
+
+                <TextView
+                    android:id="@+id/tvPasswordSpecialChar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="• At least 1 special character (@$!%*?#^;:,./)"
+                    android:textColor="@color/colorError" />
+            </LinearLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/ilRegisterConPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="Confirm Password"
+                app:boxStrokeColor="@color/primaryBlue"
+                app:hintTextColor="@color/primaryBlue"
+                app:passwordToggleEnabled="true"
+                app:passwordToggleTint="@color/primaryBlue">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etRegisterConPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPassword"
+                    android:textColor="@color/backgroundDark"
+                    android:textSize="16sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1"
+                    android:background="@color/backgroundLight" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="OR"
+                    android:textColor="@color/backgroundDark"
+                    android:textSize="14sp" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1"
+                    android:background="@color/backgroundLight" />
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnMsftRegister"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="16dp"
+                android:text="Continue with Microsoft"
+                android:textColor="@color/backgroundDark"
+                android:textSize="16sp"
+                app:cornerRadius="8dp"
+                app:icon="@drawable/ic_microsoft"
+                app:iconTint="@null"
+                app:strokeColor="@color/backgroundLight" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRegister"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="24dp"
+                android:backgroundTint="@color/primaryBlue"
+                android:clickable="true"
+                android:enabled="false"
+                android:text="Register"
+                android:textSize="16sp"
+                app:cornerRadius="8dp" />
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+</androidx.constraintlayout.widget.ConstraintLayout>

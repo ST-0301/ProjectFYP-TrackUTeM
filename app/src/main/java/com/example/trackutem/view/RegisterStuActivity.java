@@ -13,28 +13,28 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.example.trackutem.R;
-import com.example.trackutem.controller.RegisterStudController;
+import com.example.trackutem.controller.RegisterStuController;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import java.util.Objects;
 
-public class RegisterStudActivity extends AppCompatActivity {
+public class RegisterStuActivity extends AppCompatActivity {
     private TextInputLayout ilRegisterEmail, ilRegisterPassword, ilRegisterConPassword;
     private TextInputEditText etRegisterName, etRegisterEmail, etRegisterPassword, etRegisterConPassword;
     private LinearLayout llPasswordConditions;
     private TextView tvPasswordLength, tvPasswordUppercase, tvPasswordLowercase, tvPasswordNumber, tvPasswordSpecialChar;
     private Button btnRegister;
-    private RegisterStudController registerStudController;
     private final Handler handler = new Handler();
     private boolean isEmailValid = false;
     private boolean isEmailAvailable = false;
     private boolean isPasswordValid = false;
     private boolean isConPasswordValid = false;
+    private RegisterStuController registerStuController;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_registerstud);
+        setContentView(R.layout.activity_registerstu);
 
         ilRegisterEmail = findViewById(R.id.ilRegisterEmail);
         ilRegisterPassword = findViewById(R.id.ilRegisterPassword);
@@ -52,9 +52,8 @@ public class RegisterStudActivity extends AppCompatActivity {
         tvPasswordNumber = findViewById(R.id.tvPasswordNumber);
         tvPasswordSpecialChar = findViewById(R.id.tvPasswordSpecialChar);
 
-        Button btnMsftRegister = findViewById(R.id.btnMsftRegister);
         btnRegister = findViewById(R.id.btnRegister);
-        registerStudController = new RegisterStudController(this);
+        registerStuController = new RegisterStuController(this);
 
         etRegisterEmail.addTextChangedListener(new TextWatcher() {
             @Override
@@ -63,7 +62,7 @@ public class RegisterStudActivity extends AppCompatActivity {
             public void onTextChanged(CharSequence charSequence, int start, int before, int count) {
                 // Validate email format as user types
                 String email = Objects.requireNonNull(etRegisterEmail.getText()).toString().trim().toLowerCase();
-                isEmailValid = registerStudController.isValidEmail(email);
+                isEmailValid = registerStuController.isValidEmail(email);
                 if(!isEmailValid) {
                     showError(ilRegisterEmail, "Enter a valid email (e.g., matricNumber@student.utem.edu.my)");
                     isEmailAvailable = false;
@@ -85,7 +84,7 @@ public class RegisterStudActivity extends AppCompatActivity {
                 // Validate password format as user types
                 llPasswordConditions.setVisibility(View.VISIBLE);
                 String password = Objects.requireNonNull(etRegisterPassword.getText()).toString().trim();
-                isPasswordValid = registerStudController.isValidPassword(password);
+                isPasswordValid = registerStuController.isValidPassword(password);
                 if(!isPasswordValid) {
                     showError(ilRegisterPassword, "Password must be at least 8 characters, with letters, numbers, and symbols");
                 } else {
@@ -123,37 +122,34 @@ public class RegisterStudActivity extends AppCompatActivity {
             String conPassword = Objects.requireNonNull(etRegisterConPassword.getText()).toString().trim();
 
             if (name.isEmpty() || email.isEmpty() || password.isEmpty() || conPassword.isEmpty()) {
-                Toast.makeText(RegisterStudActivity.this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+                Toast.makeText(RegisterStuActivity.this, "Please fill all fields", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             if (isEmailValid && isEmailAvailable && isPasswordValid && isConPasswordValid) {
-                registerStudController.registerUser(name, email, password, new RegisterStudController.RegistrationCallback() {
+                registerStuController.registerUser(name, email, password, new RegisterStuController.RegistrationCallback() {
                             @Override
                             public void onSuccess() {
-                                Intent intent = new Intent(RegisterStudActivity.this, StudentMainActivity.class);
-                                startActivity(intent);
+                                Toast.makeText(RegisterStuActivity.this, "Verification email sent. Please check your inbox", Toast.LENGTH_SHORT).show();
+                                startActivity(new Intent(RegisterStuActivity.this, LoginActivity.class));
                                 finish();
                             }
                             @Override
                             public void onFailure(String errorMessage) {
-                                Toast.makeText(RegisterStudActivity.this,"Registration failed: " + errorMessage, Toast.LENGTH_SHORT).show();
+                                Toast.makeText(RegisterStuActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
                             }
                         }
+
                 );
             } else {
-                Toast.makeText(RegisterStudActivity.this, "Please ensure all fields are valid", Toast.LENGTH_SHORT).show();
+                Toast.makeText(RegisterStuActivity.this, "Please ensure all fields are valid", Toast.LENGTH_SHORT).show();
             }
-        });
-
-        btnMsftRegister.setOnClickListener(v -> {
-
         });
     }
 
     private void checkEmailAvailability(String email) {
         handler.removeCallbacksAndMessages(null);
-        handler.postDelayed(() -> registerStudController.checkEmailAvailability(email, isAvailable -> {
+        handler.postDelayed(() -> registerStuController.checkEmailAvailability(email, isAvailable -> {
             isEmailAvailable = isAvailable;
             if (!isAvailable) {
                 showError(ilRegisterEmail, "Email is already registered.");

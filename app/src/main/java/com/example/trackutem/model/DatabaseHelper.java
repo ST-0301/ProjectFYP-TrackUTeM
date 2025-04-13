@@ -70,22 +70,6 @@ public class DatabaseHelper {
                 });
     }
 
-//    public void checkPhoneExists(String phone, final onPhoneCheckedListener listener) {
-//        db.collection("users")
-//                .whereEqualTo("phone", phone)
-//                .get()
-//                .addOnCompleteListener(task -> {
-//                    if(task.isSuccessful()) {
-//                        QuerySnapshot result = task.getResult();
-//                        boolean isPhoneAvailable = (result == null || result.isEmpty());
-//                        listener.onPhoneChecked(isPhoneAvailable);
-//                    } else {
-//                        Log.e("DatabaseHelper", "Error checking phone availability", task.getException());
-//                        listener.onPhoneChecked(false);
-//                    }
-//                });
-//    }
-
     public interface onUserDataFetchedListener {
         void onDataFetched(User user);
     }
@@ -94,7 +78,4 @@ public class DatabaseHelper {
         void onEmailChecked(boolean isAvailable);
     }
 
-//    public interface onPhoneCheckedListener {
-//        void onPhoneChecked(boolean isAvailable);
-//    }
 }

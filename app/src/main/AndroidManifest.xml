@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Permissions -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -24,10 +27,10 @@
         </activity>
 
         <!-- Main Activity -->
-        <activity android:name=".view.StudentMainActivity" />
-        <activity android:name=".view.DriverMainActivity" />
+        <activity android:name=".view.MainStuActivity" />
+        <activity android:name=".view.MainDrvActivity" />
 
         <!-- Register Activity -->
-        <activity android:name=".view.RegisterStudActivity" />
+        <activity android:name=".view.RegisterStuActivity" />
     </application>
 </manifest>

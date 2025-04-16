@@ -85,6 +85,8 @@ public class LoginActivity extends AppCompatActivity {
                     FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
                     if (user != null && user.isEmailVerified()) {
                         handleSuccessfulLogin(email);
+                    } else if (email.endsWith("@utem.edu.my")) {
+                        handleSuccessfulLogin(email);
                     } else {
                         Toast.makeText(LoginActivity.this, "Please verify your email first", Toast.LENGTH_SHORT).show();
                         FirebaseAuth.getInstance().signOut();

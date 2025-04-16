@@ -46,4 +46,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-firestore'
 
     implementation 'com.google.android.gms:play-services-auth:20.7.0'
+    implementation 'com.google.android.gms:play-services-maps:18.1.0'
+    implementation 'com.google.android.gms:play-services-location:21.0.1'
+    implementation 'androidx.fragment:fragment-ktx:1.5.5' // or latest version
 }

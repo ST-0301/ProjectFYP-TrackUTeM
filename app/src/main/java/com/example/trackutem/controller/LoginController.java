@@ -28,6 +28,8 @@ public class LoginController {
         FirebaseUser user = mAuth.getCurrentUser();
         if (user != null && user.isEmailVerified()) {
             callback.onLoginSuccess();
+        } else if (user.getEmail().endsWith("@utem.edu.my")) {
+            callback.onLoginSuccess();
         } else {
             mAuth.signOut();
             callback.onLoginFailure("Email not verified");

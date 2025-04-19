@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "322741159514",
+    "firebase_url": "https://trackutem-7c56e-default-rtdb.asia-southeast1.firebasedatabase.app",
     "project_id": "trackutem-7c56e",
     "storage_bucket": "trackutem-7c56e.firebasestorage.app"
   },
@@ -12,7 +13,12 @@
           "package_name": "com.example.trackutem"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "322741159514-h3hfo11mmc2f2qclrqtr91380kl4sdoi.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAVfIyM6T17Op7ik0XLGvMyY_h4G_d7vY0"
@@ -20,7 +26,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "322741159514-h3hfo11mmc2f2qclrqtr91380kl4sdoi.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

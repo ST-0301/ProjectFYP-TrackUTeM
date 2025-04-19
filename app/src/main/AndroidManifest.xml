@@ -7,6 +7,11 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 
     <!-- Required for Google Maps -->
     <uses-feature
@@ -45,11 +50,14 @@
         <activity android:name=".view.RegisterStuActivity"
             android:windowSoftInputMode="adjustResize"/>
 
-        <!-- Main Activity -->
+        <!-- Main Activities -->
         <activity android:name=".view.MainStuActivity"
             android:screenOrientation="portrait"/>
         <activity android:name=".view.MainDrvActivity"
             android:screenOrientation="portrait"/>
 
+        <service android:name=".service.TrackingService"
+            android:foregroundServiceType="location"
+            android:exported="false" />
     </application>
 </manifest>

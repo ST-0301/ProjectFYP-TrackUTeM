@@ -111,14 +111,32 @@ public class MapController {
     }
 
     private void setupMapClickListener() {
-        mMap.setOnMapClickListener(latLng -> {
-            if (currentMarker != null) {
-                currentMarker.remove();
+        mMap.setOnMarkerClickListener(marker -> {
+            if (marker.getTag() != null) {
+                String stationName = (String) marker.getTag();
+
+                if (currentMarker != null) {
+                    currentMarker.remove();
+                }
+
+                currentMarker = mMap.addMarker(new MarkerOptions()
+                        .position(marker.getPosition())
+                        .title("Selected: " + stationName)
+                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
+                        .zIndex(1.0f)); // Force marker to top layer
+                currentMarker.showInfoWindow();
+                return true;
             }
-            currentMarker = mMap.addMarker(new MarkerOptions()
-                    .position(latLng)
-                    .title("Selected location"));
+            return false;
         });
+//        mMap.setOnMapClickListener(latLng -> {
+//            if (currentMarker != null) {
+//                currentMarker.remove();
+//            }
+//            currentMarker = mMap.addMarker(new MarkerOptions()
+//                    .position(latLng)
+//                    .title("Selected location"));
+//        });
     }
 
 
@@ -146,11 +164,11 @@ public class MapController {
         }
 
         // Click listener
-        mMap.setOnMarkerClickListener(marker -> {
-            String name = (String) marker.getTag();
-            Toast.makeText(context, "You selected: " + name, Toast.LENGTH_SHORT).show();
-            return false;
-        });
+//        mMap.setOnMarkerClickListener(marker -> {
+//            String name = (String) marker.getTag();
+//            Toast.makeText(context, "You selected: " + name, Toast.LENGTH_SHORT).show();
+//            return false;
+//        });
     }
 
     private BitmapDescriptor getBusIcon() {

@@ -60,7 +60,7 @@ public class RegisterStuActivity extends AppCompatActivity {
             public void beforeTextChanged(CharSequence charSequence, int start, int count, int after) {}
             @Override
             public void onTextChanged(CharSequence charSequence, int start, int before, int count) {
-                // Validate email format as user types
+                // Validate email format as type
                 String email = Objects.requireNonNull(etRegisterEmail.getText()).toString().trim().toLowerCase();
                 isEmailValid = registerStuController.isValidEmail(email);
                 if(!isEmailValid) {
@@ -81,12 +81,12 @@ public class RegisterStuActivity extends AppCompatActivity {
             public void beforeTextChanged(CharSequence charSequence, int start, int count, int after) {}
             @Override
             public void onTextChanged(CharSequence charSequence, int start, int before, int count) {
-                // Validate password format as user types
+                // Validate password format as type
                 llPasswordConditions.setVisibility(View.VISIBLE);
                 String password = Objects.requireNonNull(etRegisterPassword.getText()).toString().trim();
                 isPasswordValid = registerStuController.isValidPassword(password);
                 if(!isPasswordValid) {
-                    showError(ilRegisterPassword, "Password must be at least 8 characters, with letters, numbers, and symbols");
+                    showError(ilRegisterPassword, "Password must contain at least 8 characters with uppercase, lowercase, number, and special character");
                 } else {
                     hideError(ilRegisterPassword);
                 }
@@ -127,7 +127,7 @@ public class RegisterStuActivity extends AppCompatActivity {
             }
 
             if (isEmailValid && isEmailAvailable && isPasswordValid && isConPasswordValid) {
-                registerStuController.registerUser(name, email, password, new RegisterStuController.RegistrationCallback() {
+                registerStuController.registerStudent(name, email, password, new RegisterStuController.RegistrationCallback() {
                             @Override
                             public void onSuccess() {
                                 Toast.makeText(RegisterStuActivity.this, "Verification email sent. Please check your inbox", Toast.LENGTH_SHORT).show();

@@ -1,7 +1,9 @@
 package com.example.trackutem.view;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -13,28 +15,34 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import com.example.trackutem.R;
 import com.example.trackutem.controller.MapController;
+import com.example.trackutem.controller.RestLogController;
 import com.example.trackutem.controller.TimerController;
-import com.example.trackutem.controller.TrackingController;
 import com.example.trackutem.service.TrackingService;
+import com.example.trackutem.utils.AppStateManager;
 import com.example.trackutem.utils.NotificationHelper;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainDrvActivity extends AppCompatActivity implements TimerController.TimerCallback {
+    private String driverId;
+    private static final long REST_DURATION_MILLIS = 2 * 60 * 1000;
+    private static final long FIVE_MINUTES_WARNING = 1 * 60 * 1000;
     private static final int REQUEST_LOCATION_PERMISSION = 1001;
     private FusedLocationProviderClient fusedLocationClient;
+    private SharedPreferences prefs;
+    private AppStateManager appStateManager;
     private NotificationHelper notificationHelper;
     private MapController mapController;
-    private TrackingController trackingController;
+    private RestLogController restLogController;
     private TimerController timerController;
-    private DatabaseReference busLocationRef;
 
     private Button btnStart, btnRest, btnContinue, btnStop;
     private TextView tvTimer;
@@ -50,48 +58,73 @@ public class MainDrvActivity extends AppCompatActivity implements TimerControlle
         btnStop = findViewById(R.id.btnStop);
         tvTimer = findViewById(R.id.tvTimer);
 
-        // Initialize Firebase and Location
+        // Initialize location and user's preferences
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-        busLocationRef = FirebaseDatabase.getInstance()
-                .getReference("bus_locations")
-                .child("bus1");
+        prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        driverId = prefs.getString("driverId", null);
 
-        // Initialize helpers controllers
+        // Initialize helpers and controllers
+        appStateManager = new AppStateManager(this);
         notificationHelper = new NotificationHelper(this);
-        trackingController = new TrackingController(busLocationRef, fusedLocationClient, this);
+        restLogController = new RestLogController();
         timerController = new TimerController(this, notificationHelper);
 
+        configureSystemBars();
+        restoreUIState();
         checkPermissions();
 
         btnStart.setOnClickListener(v -> {
             btnStart.setVisibility(View.GONE);
             btnRest.setVisibility(View.VISIBLE);
             btnStop.setVisibility(View.VISIBLE);
+
+            // Initialize rest log & Record start working time
+            restLogController.createTodayRestLog(driverId, ref -> {});
+
             startService(new Intent(MainDrvActivity.this, TrackingService.class));
+            appStateManager.saveState("start", 0, true);
         });
 
         btnRest.setOnClickListener(v -> {
             btnRest.setVisibility(View.GONE);
             btnContinue.setVisibility(View.VISIBLE);
             tvTimer.setVisibility(View.VISIBLE);
+
+            // Increase rest count
+            restLogController.incrementRestCount(driverId);
+
             // Stop tracking
             stopService(new Intent(MainDrvActivity.this, TrackingService.class));
-            // Start timer
-            timerController.startCountdown(3 * 60 * 1000); // start a 30-min timer
+
+            long endTime = System.currentTimeMillis() + REST_DURATION_MILLIS;
+            appStateManager.saveState("rest", endTime, false);
+
+            // Start 30-min timer
+            timerController.startCountdown(REST_DURATION_MILLIS);
         });
 
         btnContinue.setOnClickListener(v -> {
             btnContinue.setVisibility(View.GONE);
             btnRest.setVisibility(View.VISIBLE);
             tvTimer.setVisibility(View.GONE);
+
             // Resume tracking
             startService(new Intent(MainDrvActivity.this, TrackingService.class));
+
             // Stop timer
             timerController.stopCountdown();
+
+            appStateManager.saveState("continue", 0, true);
         });
 
         btnStop.setOnClickListener(v -> {
+            // Record end working time
+            restLogController.updateEndWorkTime(driverId);
+
             stopService(new Intent(MainDrvActivity.this, TrackingService.class));
+            timerController.stopCountdown();
+            appStateManager.clear();
+
             btnStart.setVisibility(View.VISIBLE);
             btnRest.setVisibility(View.GONE);
             btnContinue.setVisibility(View.GONE);
@@ -100,16 +133,58 @@ public class MainDrvActivity extends AppCompatActivity implements TimerControlle
         });
     }
 
-    // TimerController callbacks
-    @Override
-    public void onTimerTick(String formattedTime) {
-        tvTimer.setText(formattedTime);
+    private void configureSystemBars() {
+        // Configure window insets controller
+        WindowInsetsControllerCompat windowInsetsController =
+                WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+
+        // Set behavior to show transient bars by swipe
+        windowInsetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+        // Set status bar appearance
+        windowInsetsController.setAppearanceLightStatusBars(true);
+        // Hide both navigation bar and status bar initially
+        windowInsetsController.hide(WindowInsetsCompat.Type.navigationBars());
     }
 
-    @Override
-    public void onTimerFinish() {
-        notificationHelper.showTimerNotification("Rest time over. Tap Continue to resume", true);
-        notificationHelper.vibrateDevice(1500);
+    @SuppressLint("SetTextI18n")
+    private void restoreUIState() {
+        String buttonState = appStateManager.getButtonState();
+        long timerEnd = appStateManager.getTimerEndTime();
+        boolean isTracking = appStateManager.isTracking();
+
+        btnStart.setVisibility(View.GONE);
+        btnRest.setVisibility(View.GONE);
+        btnContinue.setVisibility(View.GONE);
+        btnStop.setVisibility(View.GONE);
+        tvTimer.setVisibility(View.GONE);
+
+        switch (buttonState) {
+            case "start":
+
+            case "continue":
+                btnRest.setVisibility(View.VISIBLE);
+                btnStop.setVisibility(View.VISIBLE);
+                break;
+
+            case "rest":
+                btnContinue.setVisibility(View.VISIBLE);
+                tvTimer.setVisibility(View.VISIBLE);
+                btnStop.setVisibility(View.VISIBLE);
+
+                long remainingTime = timerEnd - System.currentTimeMillis();
+                if (remainingTime > 0) {
+                    timerController.startCountdown(remainingTime);
+                } else {
+                    tvTimer.setText("00:00");
+                }
+                break;
+
+            default:
+                btnStart.setVisibility(View.VISIBLE);
+        }
+        if (isTracking) {
+            startService(new Intent(MainDrvActivity.this, TrackingService.class));
+        }
     }
 
     // Permissions
@@ -162,5 +237,15 @@ public class MainDrvActivity extends AppCompatActivity implements TimerControlle
                 mapController.initializeMapFeatures();
             });
         }
+    }
+
+    // TimerController callbacks
+    @Override
+    public void onTimerTick(String formattedTime) {
+        tvTimer.setText(formattedTime);
+    }
+    @Override
+    public void onTimerFinish() {
+        tvTimer.setText("00:00");
     }
 }

@@ -7,7 +7,6 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.util.Log;
-import android.widget.Toast;
 import android.os.Looper;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -39,7 +38,7 @@ public class MapController {
     }
     public void initializeMapFeatures() {
         enableUserLocation();
-        setMapStyle();
+        setMapStyle(0, 25, 0, 0);
         setupMapClickListener();
         addBusStations();
     }
@@ -83,23 +82,9 @@ public class MapController {
         };
 
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
-
-//        fusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
-//            if (location != null) {
-//                LatLng userLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-//
-//                // Move camera to current location
-//                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 17f));
-//
-//                // Add marker at current location
-//                currentMarker = mMap.addMarker(new MarkerOptions()
-//                        .position(userLatLng)
-//                        .title("You are here"));
-//            }
-//        });
     }
 
-    private void setMapStyle() {
+    private void setMapStyle(int left, int top, int right, int bottom) {
         try {
             boolean success = mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style));
             if (!success) {
@@ -108,6 +93,14 @@ public class MapController {
         } catch (Resources.NotFoundException e) {
             Log.e("MapStyle", "Can't find style. Error: ", e);
         }
+
+        float density = context.getResources().getDisplayMetrics().density;
+        mMap.setPadding(
+                (int)(left * density),
+                (int)(top * density),
+                (int)(right * density),
+                (int)(bottom * density)
+        );
     }
 
     private void setupMapClickListener() {
@@ -129,14 +122,6 @@ public class MapController {
             }
             return false;
         });
-//        mMap.setOnMapClickListener(latLng -> {
-//            if (currentMarker != null) {
-//                currentMarker.remove();
-//            }
-//            currentMarker = mMap.addMarker(new MarkerOptions()
-//                    .position(latLng)
-//                    .title("Selected location"));
-//        });
     }
 
 
@@ -162,13 +147,6 @@ public class MapController {
 //                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.bus_marker)));
             marker.setTag(stationNames[i]);
         }
-
-        // Click listener
-//        mMap.setOnMarkerClickListener(marker -> {
-//            String name = (String) marker.getTag();
-//            Toast.makeText(context, "You selected: " + name, Toast.LENGTH_SHORT).show();
-//            return false;
-//        });
     }
 
     private BitmapDescriptor getBusIcon() {

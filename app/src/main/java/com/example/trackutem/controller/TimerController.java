@@ -1,20 +1,16 @@
 package com.example.trackutem.controller;
 
+import android.annotation.SuppressLint;
 import android.os.CountDownTimer;
 import com.example.trackutem.utils.NotificationHelper;
 
 public class TimerController {
-    private static final long FIVE_MINUTES_WARNING_THRESHOLD = 2 * 60 * 1000;
-    private static final long FIVE_MINUTES_WARNING_START = 1 * 60 * 1000;
+    private static final long FIVE_MINUTES_WARNING = 1 * 60 * 1000;
     private CountDownTimer countDownTimer;
-    private TimerCallback timerCallback;
-    private NotificationHelper notificationHelper;
+    private final TimerCallback timerCallback;
+    private final NotificationHelper notificationHelper;
     private long timeLeftInMillis;
-
-    public interface TimerCallback {
-        void onTimerTick(String formattedTime);
-        void onTimerFinish();
-    }
+    private boolean fiveMinuteNotificationSent = false;
 
     public TimerController(TimerCallback callback, NotificationHelper notificationHelper) {
         this.timerCallback = callback;
@@ -23,8 +19,10 @@ public class TimerController {
 
     public void startCountdown(long durationMillis) {
         stopCountdown(); // Ensure no duplicate timer
+        fiveMinuteNotificationSent = false;
 
         countDownTimer = new CountDownTimer(durationMillis, 1000) {
+            @SuppressLint("DefaultLocale")
             @Override
             public void onTick(long millisUntilFinished) {
                 timeLeftInMillis = millisUntilFinished;
@@ -36,18 +34,18 @@ public class TimerController {
                 }
 
                 // 5-minute warning
-                if (millisUntilFinished <= FIVE_MINUTES_WARNING_THRESHOLD && millisUntilFinished > FIVE_MINUTES_WARNING_START) {
+                if (millisUntilFinished <= FIVE_MINUTES_WARNING && !fiveMinuteNotificationSent) {
                     notificationHelper.showTimerNotification("5 minutes left. Tap Continue to resume", false);
+                    fiveMinuteNotificationSent = true;
                 }
             }
             @Override
             public void onFinish() {
+                notificationHelper.showTimerNotification("Rest time over. Tap Continue to resume", true);
+
                 if (timerCallback != null) {
                     timerCallback.onTimerFinish();
                 }
-//                tvTimer.setText("00:00");
-//                // Auto-vibrate when time finishes
-//                vibrateDevice(1500);
             }
         }.start();
     }
@@ -57,5 +55,10 @@ public class TimerController {
             countDownTimer.cancel();
             countDownTimer = null;
         }
+    }
+
+    public interface TimerCallback {
+        void onTimerTick(String formattedTime);
+        void onTimerFinish();
     }
 }

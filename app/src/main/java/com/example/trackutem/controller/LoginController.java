@@ -1,42 +1,80 @@
 package com.example.trackutem.controller;
 
+import android.os.Looper;
+import com.example.trackutem.model.DatabaseHelper;
+import com.example.trackutem.model.Driver;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseUser;
+import org.mindrot.jbcrypt.BCrypt;
 
 public class LoginController {
+    private final DatabaseHelper databaseHelper;
     private final FirebaseAuth mAuth;
 
     public LoginController() {
+        this.databaseHelper = new DatabaseHelper();
         this.mAuth = FirebaseAuth.getInstance();
     }
 
-    // Perform login with email and password
-    public void loginUser(String email, String password, LoginCallback callback) {
+    // Student login with email and password
+    public void loginUser(String email, String password, StudentLoginCallback callback) {
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        handleSuccessfulLogin(callback);
+                        handleStudentSuccessfulLogin(callback);
                     } else {
-                        handleLoginError(task, callback);
+                        handleStudentLoginError(task, callback);
                     }
                 });
     }
-    private void handleSuccessfulLogin(LoginCallback callback) {
+    public void loginDriver(String email, String password, DriverLoginCallback callback) {
+        databaseHelper.getDriverByEmail(email, new DatabaseHelper.onDriverFetchedListener() {
+            @Override
+            public void onDriverFetched(Driver driver) {
+                new Thread(() -> {
+                    try {
+                        String storedHash = driver.getPassword();
+                        if (storedHash == null || storedHash.isEmpty()) {
+                            throw new IllegalArgumentException("Invalid password hash");
+                        }
+
+                        // Normalize hash format
+                        if (storedHash.startsWith("$2b$")) {
+                            storedHash = "$2a" + storedHash.substring(3);
+                        }
+                        boolean matched = BCrypt.checkpw(password, storedHash);
+                        new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+                            if (matched) {
+                                callback.onDriverLoginSuccess(driver);
+                            } else {
+                                callback.onDriverLoginFailure("Incorrect password.");
+                            }
+                        });
+                    } catch (Exception e) {
+                        new android.os.Handler(Looper.getMainLooper()).post(() -> {
+                            callback.onDriverLoginFailure("Authentication error: " + e.getMessage());
+                        });
+                    }
+                }).start();
+            }
+            @Override
+            public void onDriverFetchFailed(String errorMessage) {
+                callback.onDriverLoginFailure(errorMessage);
+            }
+        });
+    }
+    private void handleStudentSuccessfulLogin(StudentLoginCallback callback) {
         FirebaseUser user = mAuth.getCurrentUser();
         if (user != null && user.isEmailVerified()) {
-            callback.onLoginSuccess();
-        } else if (user.getEmail().endsWith("@utem.edu.my")) {
-            callback.onLoginSuccess();
+            callback.onStudentLoginSuccess(user.getEmail());
         } else {
             mAuth.signOut();
-            callback.onLoginFailure("Email not verified");
-        }
+            callback.onStudentLoginFailure(user == null ? "User not found" : "Email not verified");        }
     }
-
-    private void handleLoginError(Task<AuthResult> task, LoginCallback callback) {
+    private void handleStudentLoginError(Task<AuthResult> task, StudentLoginCallback callback) {
         String errorMessage = "Login failed. Please try again";
         if (task.getException() instanceof FirebaseAuthException) {
             String errorCode;
@@ -56,10 +94,10 @@ public class LoginController {
                     errorMessage = "Incorrect email or password.";
             }
         }
-        callback.onLoginFailure(errorMessage);
+        callback.onStudentLoginFailure(errorMessage);
     }
 
-    // Send password reset email
+    // Send password reset email to student
     public void resetPassword(String email, ResetPasswordCallback callback) {
         mAuth.sendPasswordResetEmail(email)
                 .addOnCompleteListener(task -> {
@@ -72,13 +110,16 @@ public class LoginController {
                 });
     }
 
-    public interface LoginCallback {
-        void onLoginSuccess();
-        void onLoginFailure(String errorMessage);
+    public interface StudentLoginCallback {
+        void onStudentLoginSuccess(String email);
+        void onStudentLoginFailure(String errorMessage);
     }
-
     public interface ResetPasswordCallback {
         void onResetPasswordSuccess();
         void onResetPasswordFailure(String errorMessage);
+    }
+    public interface DriverLoginCallback {
+        void onDriverLoginSuccess(Driver driver);
+        void onDriverLoginFailure(String errorMessage);
     }
 }

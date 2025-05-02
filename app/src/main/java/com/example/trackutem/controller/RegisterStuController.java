@@ -21,17 +21,15 @@ public class RegisterStuController {
         String emailRegex = "(?i)^[a-zA-Z0-9._%+-]+@(student\\.utem\\.edu\\.my|utem\\.edu\\.my)$";
         return email.matches(emailRegex);
     }
-
     public boolean isValidPassword(String password) {
         String passwordRegex = "^(?=.*[A-Za-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?#^;:,./])[A-Za-z\\d@$!%*?#^;:,./]{8,}$";
         return password.matches(passwordRegex);
     }
-
     public void checkEmailAvailability(String email, DatabaseHelper.onEmailCheckedListener listener) {
         dbHelper.checkEmailExists(email, listener);
     }
 
-    public void registerUser(String name, String email, String password, RegistrationCallback callback) {
+    public void registerStudent(String name, String email, String password, RegistrationCallback callback) {
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
@@ -41,8 +39,8 @@ public class RegisterStuController {
                             user.sendEmailVerification()
                                     .addOnCompleteListener(emailTask -> {
                                        if (emailTask.isSuccessful()) {
-                                           // Save user data
-                                           dbHelper.saveUserData(user.getUid(), name, email, "student");
+                                           // Save student data
+                                           dbHelper.saveStudentData(user.getUid(), name, email, "student");
                                            callback.onSuccess();
                                        }
                                     });

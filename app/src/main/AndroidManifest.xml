@@ -9,7 +9,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 
@@ -33,7 +33,7 @@
         <!-- Google Maps API Key -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyBl-nh_O2qL1Ovy-DRpS4emqsDkT6kB04E" />
+            android:value="AIzaSyD8mVwi9ve2Hx-5ygkcoFCDfbJwudUXFag" />
 
         <!-- Login Activity (Launcher) -->
         <activity
@@ -56,8 +56,20 @@
         <activity android:name=".view.MainDrvActivity"
             android:screenOrientation="portrait"/>
 
+
         <service android:name=".service.TrackingService"
             android:foregroundServiceType="location"
             android:exported="false" />
+
+        <receiver
+            android:name=".utils.NotificationReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="REST_TIME_WARNING" />
+                <action android:name="REST_TIME_OVER" />
+            </intent-filter>
+        </receiver>
+
     </application>
 </manifest>

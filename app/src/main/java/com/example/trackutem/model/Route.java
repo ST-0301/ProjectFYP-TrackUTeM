@@ -1,7 +1,6 @@
 package com.example.trackutem.model;
 
 import com.google.firebase.database.PropertyName;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,7 +17,7 @@ public class Route {
         @PropertyName("fri")
         private DaySchedule friSchedule;
 
-        // Getter
+        // Getters
         public DaySchedule getMonThuSchedule() {
             return monThuSchedule;
         }
@@ -26,7 +25,7 @@ public class Route {
             return friSchedule;
         }
 
-        // Setter
+        // Setters
         public void setMonThuSchedule(DaySchedule monThuSchedule) {
             this.monThuSchedule = monThuSchedule;
         }
@@ -42,7 +41,7 @@ public class Route {
         @PropertyName("out")
         private List<String> outCampusTimes;
 
-        // Getter
+        // Getters
         public List<String> getInCampusTimes() {
             return inCampusTimes;
         }
@@ -50,7 +49,7 @@ public class Route {
             return outCampusTimes;
         }
 
-        // Setter
+        // Setters
         public void setInCampusTimes(List<String> inCampusTimes) {
             this.inCampusTimes = inCampusTimes;
         }

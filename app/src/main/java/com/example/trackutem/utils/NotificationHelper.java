@@ -13,7 +13,7 @@ import android.util.Log;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import com.example.trackutem.R;
-import com.example.trackutem.view.MainDrvActivity;
+import com.example.trackutem.view.RouteDetailsActivity;
 
 public class NotificationHelper {
     private static final String TAG = "NotificationHelper";
@@ -67,14 +67,14 @@ public class NotificationHelper {
         }
 
         // Open app when notification is tapped
-        Intent intent = new Intent(context, MainDrvActivity.class);
+        Intent intent = new Intent(context, RouteDetailsActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
         // Notification
         String channelId = isFinalAlert ? CHANNEL_ID_FINISH : CHANNEL_ID_WARNING;
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channelId)
-                .setSmallIcon(R.drawable.ic_notification)
+                .setSmallIcon(R.drawable.ic_notifications)
                 .setContentTitle("TrackUTeM Driver Alert")
                 .setContentText(message)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -86,13 +86,13 @@ public class NotificationHelper {
         notificationManager.notify(notificationId, builder.build());
     }
     public Notification buildForegroundTrackingNotification() {
-        Intent intent = new Intent(context, MainDrvActivity.class);
+        Intent intent = new Intent(context, RouteDetailsActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(
                 context, 0, intent, PendingIntent.FLAG_IMMUTABLE
         );
 
         return new NotificationCompat.Builder(context, CHANNEL_ID_FOREGROUND)
-                .setSmallIcon(R.drawable.ic_notification)
+                .setSmallIcon(R.drawable.ic_notifications)
                 .setContentTitle("TrackUTeM is running")
                 .setContentText("Tracking your bus location in background")
                 .setContentIntent(pendingIntent)

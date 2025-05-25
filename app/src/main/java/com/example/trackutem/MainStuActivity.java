@@ -1,4 +1,4 @@
-package com.example.trackutem.view;
+package com.example.trackutem;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -8,7 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import com.example.trackutem.R;
+
 import com.example.trackutem.controller.MapController;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;

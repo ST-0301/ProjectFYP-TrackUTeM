@@ -8,7 +8,7 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:322741159514:android:7d9156a11f621e38ec7a63",
+        "mobilesdk_app_id": "1:322741159514:android:9836c6002b8e85ceec7a63",
         "android_client_info": {
           "package_name": "com.example.trackutem"
         }
@@ -21,7 +21,7 @@
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyAVfIyM6T17Op7ik0XLGvMyY_h4G_d7vY0"
+          "current_key": "AIzaSyBl-nh_O2qL1Ovy-DRpS4emqsDkT6kB04E"
         }
       ],
       "services": {

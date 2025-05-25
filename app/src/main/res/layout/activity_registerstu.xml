@@ -40,7 +40,7 @@
                 android:layout_gravity="center_horizontal"
                 android:text="Create Account"
                 android:textColor="@color/backgroundDark"
-                android:textSize="24sp"
+                android:textSize="20sp"
                 android:textStyle="bold" />
 
             <com.google.android.material.textfield.TextInputLayout
@@ -58,7 +58,7 @@
                     android:layout_height="wrap_content"
                     android:inputType="text"
                     android:textColor="@color/backgroundDark"
-                    android:textSize="16sp" />
+                    android:textSize="14sp" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -76,7 +76,7 @@
                     android:layout_height="wrap_content"
                     android:inputType="textEmailAddress"
                     android:textColor="@color/backgroundDark"
-                    android:textSize="16sp" />
+                    android:textSize="14sp" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -96,7 +96,7 @@
                     android:layout_height="wrap_content"
                     android:inputType="textPassword"
                     android:textColor="@color/backgroundDark"
-                    android:textSize="16sp" />
+                    android:textSize="14sp" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <LinearLayout
@@ -160,21 +160,21 @@
                     android:layout_height="wrap_content"
                     android:inputType="textPassword"
                     android:textColor="@color/backgroundDark"
-                    android:textSize="16sp" />
+                    android:textSize="14sp" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnRegister"
                 style="@style/Widget.Material3.Button"
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
+                android:layout_height="56dp"
                 android:layout_marginTop="24dp"
                 android:backgroundTint="@color/primaryBlue"
                 android:clickable="true"
                 android:enabled="false"
                 android:text="Register"
-                android:textSize="16sp"
-                app:cornerRadius="8dp" />
+                android:textSize="14sp"
+                app:cornerRadius="28dp" />
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 </androidx.constraintlayout.widget.ConstraintLayout>

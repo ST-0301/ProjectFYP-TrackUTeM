@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/navigation_home"
+        android:icon="@drawable/ic_home"
+        android:title="HOME" />
+
+    <item
+        android:id="@+id/navigation_trip"
+        android:icon="@drawable/ic_bus"
+        android:title="TRIPS" />
+
+    <item
+        android:id="@+id/navigation_notifications"
+        android:icon="@drawable/ic_notifications"
+        android:title="NOTIFICATIONS" />
+
+<!--    <item-->
+<!--        android:id="@+id/navigation_feedback"-->
+<!--        android:icon="@drawable/ic_support"-->
+<!--        android:title="@string/title_support" />-->
+
+<!--    <item-->
+<!--        android:id="@+id/navigation_profile"-->
+<!--        android:icon="@drawable/ic_profile"-->
+<!--        android:title="@string/title_profile" />-->
+
+    <item
+        android:id="@+id/navigation_settings"
+        android:icon="@drawable/ic_settings"
+        android:title="SETTINGS" />
+</menu>

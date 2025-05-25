@@ -1,3 +1,14 @@
 <resources>
     <string name="app_name">TrackUTeM</string>
+    <string name="stops_list_description">List of route stops</string>
+    <string name="stop_item_description">Stop: %1$s</string>
+
+<!--    <string name="messages_header">Messages</string>-->
+<!--    <string name="signature_title">Signature</string>-->
+<!--    <string name="reply_title">Reply Settings</string>-->
+<!--    <string name="sync_header">Sync Settings</string>-->
+<!--    <string name="sync_title">Sync Frequency</string>-->
+<!--    <string name="attachment_title">Attachments</string>-->
+<!--    <string name="attachment_summary_on">Save attachments</string>-->
+<!--    <string name="attachment_summary_off">Dont save attachments</string>-->
 </resources>

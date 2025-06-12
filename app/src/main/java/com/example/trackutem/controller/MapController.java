@@ -1,6 +1,8 @@
+// MapController.java
 package com.example.trackutem.controller;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
@@ -16,19 +18,25 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.Priority;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
+import java.util.List;
 
 public class MapController {
     private final Context context;
     private final GoogleMap mMap;
     private final FusedLocationProviderClient fusedLocationClient;
+    private Polyline currentRoutePolyline;
     private Marker currentMarker;
 
     public MapController(Context context, GoogleMap mMap, FusedLocationProviderClient fusedLocationClient) {
@@ -36,31 +44,72 @@ public class MapController {
         this.mMap = mMap;
         this.fusedLocationClient = fusedLocationClient;
     }
+
+    // Public Methods
     public void initializeMapFeatures() {
         enableUserLocation();
-        setMapStyle(0, 25, 0, 0);
+        setMapStyle();
         setupMapClickListener();
-        addBusStations();
+//        addBusStations();
+    }
+    public void drawRoute(List<LatLng> path) {
+        if (currentRoutePolyline != null) {
+            currentRoutePolyline.remove();
+        }
+        currentRoutePolyline = mMap.addPolyline(
+                new PolylineOptions()
+                        .addAll(path)
+                        .width(12f)
+                        .color(ContextCompat.getColor(context, R.color.route_color)) // Define in colors.xml
+        );
+    }
+    public void addRouteMarkers(List<LatLng> stops, List<String> stopNames) {
+        if (stops == null || stopNames == null || stops.size() != stopNames.size()) {
+            return;
+        }
+        for (int i = 0; i < stops.size(); i++) {
+            Marker marker = mMap.addMarker(new MarkerOptions()
+                    .position(stops.get(i))
+                    .title(stopNames.get(i))
+                    .icon(getBusIcon()));
+            if (marker != null) {
+                marker.setTag(stopNames.get(i));
+            }
+        }
+    }
+    public void zoomToRoute(List<LatLng> path) {
+        if (path == null || path.isEmpty()) {
+            return;
+        }
+        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+        for (LatLng point : path) {
+            builder.include(point);
+        }
+        try {
+            mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 100));
+        } catch (Exception e) {
+            // Handle exception for small routes
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(path.get(0), 14f));
+        }
     }
 
+    // Location & Map Setup
     private void enableUserLocation() {
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
         mMap.setMyLocationEnabled(true);
-
-        LocationRequest locationRequest = LocationRequest.create();
-        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        locationRequest.setInterval(10000);
-        locationRequest.setFastestInterval(5000);
-        locationRequest.setNumUpdates(1);
-
+        setupInitialLocation();
+    }
+    private void setupInitialLocation() {
+        LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000)
+                .setMinUpdateIntervalMillis(5000)
+                .setMaxUpdates(1)
+                .build();
         LocationCallback locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(@NonNull LocationResult locationResult) {
                 super.onLocationResult(locationResult);
-
-                if (locationResult == null) return;
                 android.location.Location location = locationResult.getLastLocation();
 
                 if (location != null) {
@@ -80,11 +129,14 @@ public class MapController {
                 }
             }
         };
-
-        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
+//        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
+        try {
+            fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
+        } catch (SecurityException e) {
+            Log.e("LocationError", "SecurityException in location updates: " + e.getMessage());
+        }
     }
-
-    private void setMapStyle(int left, int top, int right, int bottom) {
+    private void setMapStyle() {
         try {
             boolean success = mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style));
             if (!success) {
@@ -93,66 +145,60 @@ public class MapController {
         } catch (Resources.NotFoundException e) {
             Log.e("MapStyle", "Can't find style. Error: ", e);
         }
-
-        float density = context.getResources().getDisplayMetrics().density;
-        mMap.setPadding(
-                (int)(left * density),
-                (int)(top * density),
-                (int)(right * density),
-                (int)(bottom * density)
-        );
     }
 
+    // Marker & Interaction
+    @SuppressLint("PotentialBehaviorOverride")
     private void setupMapClickListener() {
         mMap.setOnMarkerClickListener(marker -> {
             if (marker.getTag() != null) {
-                String stationName = (String) marker.getTag();
-
+                String stopName = (String) marker.getTag();
                 if (currentMarker != null) {
                     currentMarker.remove();
                 }
-
                 currentMarker = mMap.addMarker(new MarkerOptions()
                         .position(marker.getPosition())
-                        .title("Selected: " + stationName)
+                        .title("Selected: " + stopName)
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
-                        .zIndex(1.0f)); // Force marker to top layer
-                currentMarker.showInfoWindow();
+                        .zIndex(1.0f));
+//                currentMarker.showInfoWindow();
+                if (currentMarker != null) {
+                    currentMarker.showInfoWindow();
+                }
                 return true;
             }
             return false;
         });
     }
-
-
-    // !!!!later get from database!!!!
-    private void addBusStations() {
-        LatLng[] stationLocations = {
-                new LatLng(2.3123, 102.3201),
-                new LatLng(2.3135, 102.3190),
-                new LatLng(2.3150, 102.3178)
-        };
-
-        String[] stationNames = {
-                "UTeM Main Gate",
-                "FKEKK Bus Stop",
-                "UTeM Library Stop"
-        };
-
-        for (int i = 0; i < stationLocations.length; i++) {
-            Marker marker = mMap.addMarker(new MarkerOptions()
-                    .position(stationLocations[i])
-                    .title(stationNames[i])
-                    .icon(getBusIcon()));
-//                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.bus_marker)));
-            marker.setTag(stationNames[i]);
-        }
-    }
-
+//    private void addBusStops() {
+//        LatLng[] stopLocations = {
+//                new LatLng(2.3123, 102.3201),
+//                new LatLng(2.3135, 102.3190),
+//                new LatLng(2.3150, 102.3178)
+//        };
+//
+//        String[] stopNames = {
+//                "UTeM Main Gate",
+//                "FKEKK Bus Stop",
+//                "UTeM Library Stop"
+//        };
+//
+//        for (int i = 0; i < stopLocations.length; i++) {
+//            Marker marker = mMap.addMarker(new MarkerOptions()
+//                    .position(stopLocations[i])
+//                    .title(stopNames[i])
+//                    .icon(getBusIcon()));
+////                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.bus_marker)));
+//            marker.setTag(stopNames[i]);
+//        }
+//    }
     private BitmapDescriptor getBusIcon() {
         int height = 110;
         int width = 80;
         BitmapDrawable bitmapdraw = (BitmapDrawable) ContextCompat.getDrawable(context, R.drawable.bus_station_marker);
+        if (bitmapdraw == null) {
+            return BitmapDescriptorFactory.defaultMarker();
+        }
         Bitmap b = bitmapdraw.getBitmap();
         Bitmap smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
         return BitmapDescriptorFactory.fromBitmap(smallMarker);

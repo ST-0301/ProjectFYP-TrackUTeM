@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="primaryBlue">#2563EB</color>  <!-- Vibrant, Energetic Blue (Trust) -->
+    <color name="modernPurple">#7C3AED</color>  <!-- Modern medium purple -->
     <color name="secondaryGreen">#16A34A</color>  <!-- Deep Green (Eco-friendly) -->
     <color name="tertiaryOrange">#F59E0B</color>  <!-- Orange (Highlights) -->
 
@@ -15,7 +16,8 @@
     <!-- Error Color -->
     <color name="colorError">#D32F2F</color>  <!-- Red (Error) -->
 
+    <color name="route_color">#1E88E5</color> <!-- Blue color for route -->
+
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-
 </resources>

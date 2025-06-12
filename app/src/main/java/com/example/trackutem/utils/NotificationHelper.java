@@ -13,13 +13,14 @@ import android.util.Log;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import com.example.trackutem.R;
-import com.example.trackutem.view.RouteDetailsActivity;
+import com.example.trackutem.view.ScheduleDetailsFragment;
 
 public class NotificationHelper {
     private static final String TAG = "NotificationHelper";
     private static final String CHANNEL_ID_WARNING = "TRACKUTEM_TIMER_WARNING";
     private static final String CHANNEL_ID_FINISH = "TRACKUTEM_TIMER_FINISH";
     private static final String CHANNEL_ID_FOREGROUND = "TRACKUTEM_FOREGROUND";
+    private static final String CHANNEL_ID_GEOFENCE = "TRACKUTEM_GEOFENCE";
     private static final int NOTIFICATION_ID_WARNING = 100;
     private static final int NOTIFICATION_ID_FINISH = 101;
     private final Context context;
@@ -51,9 +52,17 @@ public class NotificationHelper {
                     "Foreground Service",
                     NotificationManager.IMPORTANCE_LOW);
 
+            // Geofence channel
+            NotificationChannel geofenceChannel = new NotificationChannel(
+                    CHANNEL_ID_GEOFENCE,
+                    "Geofence Alerts",
+                    NotificationManager.IMPORTANCE_HIGH);
+
+
             notificationManager.createNotificationChannel(warningChannel);
             notificationManager.createNotificationChannel(finishChannel);
             notificationManager.createNotificationChannel(foregroundChannel);
+            notificationManager.createNotificationChannel(geofenceChannel);
         }
     }
 
@@ -67,7 +76,7 @@ public class NotificationHelper {
         }
 
         // Open app when notification is tapped
-        Intent intent = new Intent(context, RouteDetailsActivity.class);
+        Intent intent = new Intent(context, ScheduleDetailsFragment.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
@@ -86,10 +95,8 @@ public class NotificationHelper {
         notificationManager.notify(notificationId, builder.build());
     }
     public Notification buildForegroundTrackingNotification() {
-        Intent intent = new Intent(context, RouteDetailsActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(
-                context, 0, intent, PendingIntent.FLAG_IMMUTABLE
-        );
+        Intent intent = new Intent(context, ScheduleDetailsFragment.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
         return new NotificationCompat.Builder(context, CHANNEL_ID_FOREGROUND)
                 .setSmallIcon(R.drawable.ic_notifications)
@@ -98,6 +105,21 @@ public class NotificationHelper {
                 .setContentIntent(pendingIntent)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setOngoing(true)
+                .build();
+    }
+
+    public Notification sendGeofenceNotification(String stopName) {
+        Intent intent = new Intent(context, ScheduleDetailsFragment.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        return new NotificationCompat.Builder(context, CHANNEL_ID_GEOFENCE)
+                .setSmallIcon(R.drawable.ic_location)
+                .setContentTitle("Bus Stop Ahead!")
+                .setContentText("You are arriving at " + stopName + ". Tap to confirm arrival.")
+                .setContentIntent(pendingIntent)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true)
                 .build();
     }
 }

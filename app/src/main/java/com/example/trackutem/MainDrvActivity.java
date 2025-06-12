@@ -11,7 +11,7 @@ import com.example.trackutem.databinding.ActivityMaindrvBinding;
 import com.example.trackutem.view.HomeDrvFragment;
 import com.example.trackutem.view.NotificationsFragment;
 import com.example.trackutem.view.SettingsFragment;
-import com.example.trackutem.view.TripFragment;
+import com.example.trackutem.view.ScheduleFragment;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.tabs.TabLayout;
@@ -60,7 +60,7 @@ public class MainDrvActivity extends AppCompatActivity {
                 title = "Home";
             }
             else if (id == R.id.navigation_trip) {
-                fragment = new TripFragment();
+                fragment = new ScheduleFragment();
                 title = "Trips";
             }
             else if (id == R.id.navigation_notifications) {
@@ -87,13 +87,16 @@ public class MainDrvActivity extends AppCompatActivity {
     private void switchTo(Fragment fragment, String title) {
         if (getSupportActionBar() != null) {
             getSupportActionBar().setTitle(title);
+
+            // Show back button only when there are fragments in back stack
+            getSupportActionBar().setDisplayHomeAsUpEnabled(getSupportFragmentManager().getBackStackEntryCount() > 0);
         }
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.nav_host_fragment, fragment)
                 .commit();
         invalidateOptionsMenu();
-        if (fragment instanceof TripFragment) {
+        if (fragment instanceof ScheduleFragment) {
             tabLayout.setVisibility(View.VISIBLE);
         } else {
             tabLayout.setVisibility(View.GONE);
@@ -102,6 +105,13 @@ public class MainDrvActivity extends AppCompatActivity {
     }
     public TabLayout getTabLayout() {
         return tabLayout;
+    }
+    public void updateToolbar(String title, boolean showBackButton) {
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setTitle(title);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(showBackButton);
+            getSupportActionBar().setHomeButtonEnabled(showBackButton);
+        }
     }
     // Permissions
     private void checkPermissions() {
@@ -133,6 +143,35 @@ public class MainDrvActivity extends AppCompatActivity {
                     }
                 }
             }
+        }
+    }
+    @Override
+    public void onBackPressed() {
+        if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+            getSupportFragmentManager().popBackStack();
+
+            // Update toolbar after popping back stack
+            Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
+            if (currentFragment instanceof ScheduleFragment) {
+                updateToolbar("Trips", false);
+            }
+        } else {
+            super.onBackPressed();
+        }
+    }
+    @Override
+    public boolean onSupportNavigateUp() {
+        onBackPressed();
+        return true;
+    }
+    public void showBottomNav() {
+        if (navView != null) {
+            navView.setVisibility(View.VISIBLE);
+        }
+    }
+    public void hideBottomNav() {
+        if (navView != null) {
+            navView.setVisibility(View.GONE);
         }
     }
 }

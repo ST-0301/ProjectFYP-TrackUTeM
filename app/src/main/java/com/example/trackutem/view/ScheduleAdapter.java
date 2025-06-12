@@ -7,6 +7,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.trackutem.R;
+import com.example.trackutem.model.Route;
 import com.example.trackutem.model.Schedule;
 import com.google.android.material.chip.Chip;
 import java.util.List;
@@ -15,28 +16,63 @@ public class ScheduleAdapter extends RecyclerView.Adapter<ScheduleAdapter.Schedu
     private List<Schedule> schedules;
     private OnScheduleClickListener listener;
 
-    // region Constructor
+    // Constructor
     public ScheduleAdapter(List<Schedule> schedules, OnScheduleClickListener listener) {
         this.schedules = schedules;
         this.listener = listener;
     }
 
-    // region Adapter Core Methods
+    // Adapter Core Methods
     @NonNull
     @Override
     public ScheduleViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_schedule, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_schedule, parent, false);
         return new ScheduleViewHolder(view);
     }
     @Override
     public void onBindViewHolder(@NonNull ScheduleViewHolder holder, int position) {
         Schedule schedule = schedules.get(position);
 
-        holder.tvTime.setText(schedule.getTime());
-        holder.tvRoute.setText(schedule.getRouteName());
-        holder.chipStatus.setText(schedule.getStatus() != null ? schedule.getStatus() : "scheduled");
+        // Format and display day in a modern chip
+        String day = schedule.getDay();
+        if (day != null && !day.isEmpty()) {
+            // Capitalize day: "monday" -> "Monday"
+            String formattedDay = day.substring(0, 1).toUpperCase() + day.substring(1);
+            holder.chipDay.setText(formattedDay);
+            holder.chipDay.setVisibility(View.VISIBLE);
+        } else {
+            holder.chipDay.setVisibility(View.GONE);
+        }
+        holder.tvTime.setText(schedule.getTime() != null ? schedule.getTime() : "");
 
+        // Set type text
+        String type = schedule.getType() != null ? schedule.getType() : "";
+        if (!type.isEmpty()) {
+            type = Character.toUpperCase(type.charAt(0)) + type.substring(1);
+            holder.tvType.setText("(" + type + ")");
+            holder.tvType.setVisibility(View.VISIBLE);
+        } else {
+            holder.tvType.setVisibility(View.GONE);
+        }
+
+        // Load route name asynchronously
+        holder.tvRoute.setText("Loading Route...");
+        Route.resolveRouteName(schedule.getRouteId(), new Route.RouteNameCallback() {
+            @Override
+            public void onSuccess(String routeName) {
+                if (holder.getAdapterPosition() == position) {
+                    holder.tvRoute.setText(routeName);
+                }
+            }
+            @Override
+            public void onError(Exception e) {
+                if (holder.getAdapterPosition() == position) {
+                    holder.tvRoute.setText("Route Not Found");
+                }
+            }
+        });
+
+        holder.chipStatus.setText(schedule.getStatus() != null ? schedule.getStatus() : "scheduled");
         holder.itemView.setOnClickListener(v -> listener.onScheduleClick(schedule)
         );
     }
@@ -49,20 +85,22 @@ public class ScheduleAdapter extends RecyclerView.Adapter<ScheduleAdapter.Schedu
         notifyDataSetChanged();
     }
 
-    // region ViewHolder
+    // ViewHolder
     static class ScheduleViewHolder extends RecyclerView.ViewHolder {
-        final TextView tvTime, tvRoute;
-        final Chip chipStatus;
+        final TextView tvTime, tvRoute, tvType;
+        final Chip chipDay, chipStatus;
 
         ScheduleViewHolder(@NonNull View itemView) {
             super(itemView);
+            chipDay = itemView.findViewById(R.id.chipDay);
             tvTime = itemView.findViewById(R.id.tvTime);
             tvRoute = itemView.findViewById(R.id.tvRoute);
+            tvType = itemView.findViewById(R.id.tvType);
             chipStatus = itemView.findViewById(R.id.chipStatus);
         }
     }
 
-    // region Interface
+    // Interface
     public interface OnScheduleClickListener {
         void onScheduleClick(Schedule schedule);
     }

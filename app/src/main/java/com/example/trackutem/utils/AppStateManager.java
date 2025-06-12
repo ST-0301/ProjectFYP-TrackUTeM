@@ -34,6 +34,11 @@ public class AppStateManager {
     }
 
     public void clear() {
-        prefs.edit().clear().apply();
+//        prefs.edit().clear().apply();
+        prefs.edit()
+                .remove(KEY_BUTTON_STATE)
+                .remove(KEY_TIMER_END)
+                .remove(KEY_IS_TRACKING)
+                .apply();
     }
 }

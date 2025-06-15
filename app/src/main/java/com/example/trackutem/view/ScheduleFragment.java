@@ -200,7 +200,7 @@ public class ScheduleFragment extends Fragment {
 
         for (Schedule schedule : allSchedules) {
             String status = schedule.getStatus() != null ? schedule.getStatus().toLowerCase(Locale.ENGLISH) : "scheduled";
-            String scheduleDay = schedule.getDay().toLowerCase(Locale.ENGLISH);
+            String scheduleDay = (schedule.getDay() != null) ? schedule.getDay().toLowerCase(Locale.ENGLISH) : "";
 
             if (status.equals("completed")) {
                 completedSchedules.add(schedule);

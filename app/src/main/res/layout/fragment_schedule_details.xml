@@ -48,15 +48,15 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <!-- Stops Timeline -->
+                <!-- Route Points Timeline -->
                 <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rvStops"
+                    android:id="@+id/rvRPoints"
                     android:layout_width="match_parent"
                     android:layout_height="250dp"
                     android:clipToPadding="false"
-                    android:contentDescription="List of route stops"
+                    android:contentDescription="List of route points"
                     android:paddingVertical="8dp"
-                    tools:listitem="@layout/item_stop_timeline" />
+                    tools:listitem="@layout/item_rpoint_timeline" />
 
                 <!-- Countdown Timer -->
                 <TextView

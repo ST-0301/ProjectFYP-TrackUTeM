@@ -41,8 +41,9 @@ import com.example.trackutem.controller.RestLogController;
 import com.example.trackutem.controller.ScheduleController;
 import com.example.trackutem.controller.TimerController;
 import com.example.trackutem.model.DirectionsResponse;
+import com.example.trackutem.model.Driver;
 import com.example.trackutem.model.Route;
-import com.example.trackutem.model.Stop;
+import com.example.trackutem.model.RoutePoint;
 import com.example.trackutem.model.Schedule;
 import com.example.trackutem.service.DirectionsService;
 import com.example.trackutem.service.TrackingService;
@@ -84,13 +85,14 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
     private static final long FIVE_MINUTES_WARNING = 1 * 60 * 1000;
     private static final int REQUEST_LOCATION_PERMISSION = 1001;
     private MaterialToolbar toolbar;
-    private RecyclerView rvStops;
-    private List<String> stopList = new ArrayList<>();
-    private StopsTimelineAdapter adapter;
+    private RecyclerView rvRPoints;
+    private List<String> rpointList = new ArrayList<>();
+    private RPointsTimelineAdapter adapter;
     private LinearLayout controlGroup;
     private Button btnStart, btnRest, btnContinue, btnStop;
     private TextView tvTimer;
     private SharedPreferences prefs;
+    private Driver currentDriver;
     private String driverId;
     private String routeId;
     private String scheduleId;
@@ -102,8 +104,8 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
     private FusedLocationProviderClient fusedLocationClient;
     private Retrofit retrofit;
     private DirectionsService directionsService;
-    private List<LatLng> stopLocations = new ArrayList<>();
-    private int currentStopIndex = -1;
+    private List<LatLng> rpointLocations = new ArrayList<>();
+    private int currentRPointIndex = -1;
     private Schedule currentSchedule;
     private static final float GEOFENCE_RADIUS_METERS = 5f;
     private static final long GEOFENCE_EXPIRATION_IN_MILLISECONDS = Geofence.NEVER_EXPIRE;
@@ -111,7 +113,7 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
     private PendingIntent geofencePendingIntent;
     private GeofenceBroadcastReceiver geofenceReceiver;
     public static final String GEOFENCE_BROADCAST_ACTION = "com.example.trackutem.GEOFENCE_TRANSITION";
-    private LocationCallback locationCallback; // For more frequent location updates
+    private LocationCallback locationCallback;
     private boolean requestingLocationUpdates = false;
 
     @Nullable @Override
@@ -136,12 +138,14 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
         btnStop    = view.findViewById(R.id.btnStop);
         tvTimer    = view.findViewById(R.id.tvTimer);
         controlGroup = view.findViewById(R.id.controlGroup);
-        rvStops    = view.findViewById(R.id.rvStops);
+        rvRPoints = view.findViewById(R.id.rvRPoints);
 
         // RecyclerView setup
-        rvStops.setLayoutManager(new LinearLayoutManager(requireContext()));
-        adapter = new StopsTimelineAdapter(requireContext(), stopList);
-        rvStops.setAdapter(adapter);
+        rvRPoints.setLayoutManager(new LinearLayoutManager(requireContext()));
+        adapter = new RPointsTimelineAdapter(requireContext(), rpointList);
+        rvRPoints.setAdapter(adapter);
+
+        currentDriver = new Driver();
 
         // prefs/controllers
         prefs = requireActivity().getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
@@ -168,7 +172,8 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
             btnRest.setVisibility(View.VISIBLE);
             btnStop.setVisibility(View.VISIBLE);
 
-            // Initialize rest log & Record start working time
+            // Initialize status, rest log & Record start working time
+            currentDriver.updateDriverStatus(driverId, "on_duty");
             restLogController.createTodayRestLog(driverId, ref -> {});
 
             requireActivity().startService(new Intent(requireActivity(), TrackingService.class));
@@ -183,6 +188,7 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
             tvTimer.setVisibility(View.VISIBLE);
 
             // Increase rest count
+            currentDriver.updateDriverStatus(driverId, "rest");
             restLogController.incrementRestCount(driverId);
 
             // Stop tracking
@@ -203,6 +209,7 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
             tvTimer.setVisibility(View.GONE);
 
             // Resume tracking
+            currentDriver.updateDriverStatus(driverId, "on_duty");
             requireActivity().startService(new Intent(requireActivity(), TrackingService.class));
             startGeofencing();
             startLocationUpdatesForProximity();
@@ -215,8 +222,8 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
 
         btnStop.setOnClickListener(v -> endTrip());
 
-        // Fetch schedule with stop details
-        fetchScheduleWithStopDetails(scheduleId);
+        // Fetch schedule with route point details
+        fetchScheduleWithRPointDetails(scheduleId);
 
         setHasOptionsMenu(true);
         return view;
@@ -224,6 +231,7 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
     private void endTrip() {
         // Record end working time
         restLogController.updateEndWorkTime(driverId);
+        currentDriver.updateDriverStatus(driverId, "available");
 
         requireActivity().stopService(new Intent(requireActivity(), TrackingService.class));
         timerController.stopCountdown();
@@ -232,6 +240,13 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
         // Stop geofencing when trip ends
         stopGeofencing();
         stopLocationUpdatesForProximity();
+
+        // For event type, only record tripEndTime and status
+        if (currentSchedule != null && "event".equalsIgnoreCase(currentSchedule.getType())) {
+            currentSchedule.setTripEndTime(System.currentTimeMillis());
+            currentSchedule.setStatus("completed");
+            updateScheduleInFirestore();
+        }
 
         btnStart.setVisibility(View.VISIBLE);
         btnRest.setVisibility(View.GONE);
@@ -254,22 +269,22 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
         checkPermissions();
 
-        adapter.setOnActionButtonClickListener((position, isLastStop) -> {
-            if (currentSchedule != null && position == currentStopIndex) {
+        adapter.setOnActionButtonClickListener((position, isLastRPoint) -> {
+            if (currentSchedule != null && position == currentRPointIndex) {
                 ScheduleController.recordArrivalAndNextDeparture(currentSchedule, position);
 
                 // Update UI
-                currentStopIndex = currentSchedule.getCurrentStopIndex();
-                adapter.setCurrentStopIndex(currentStopIndex);
+                currentRPointIndex = currentSchedule.getCurrentRPointIndex();
+                adapter.setCurrentRPointIndex(currentRPointIndex);
                 adapter.notifyDataSetChanged();
 
-                // If this was the last stop, end the trip
-                if (isLastStop) {
+                // If this was the last route point, end the trip
+                if (isLastRPoint) {
                     endTrip();
                     Toast.makeText(requireContext(), "Route completed!", Toast.LENGTH_SHORT).show();
                 }
-                // Prepare for next stop if not completed
-                else if (currentStopIndex != -1) {
+                // Prepare for next route point if not completed
+                else if (currentRPointIndex != -1) {
                     startGeofencing();
                 }
             }
@@ -291,29 +306,29 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
         return geofencePendingIntent;
     }
     private void startGeofencing() {
-        if (currentSchedule == null || currentSchedule.getStops() == null || currentSchedule.getStops().isEmpty()) {
-            Log.d("Geofence", "No schedule or stops to set geofences for.");
+        if (currentSchedule == null || currentSchedule.getRPoints() == null || currentSchedule.getRPoints().isEmpty()) {
+            Log.d("Geofence", "No schedule or route points to set geofences for.");
             return;
         }
         stopGeofencing();
-        if (currentStopIndex == -1 || currentStopIndex >= currentSchedule.getStops().size()) {
-            Log.d("Geofence", "No more pending stops for geofencing.");
+        if (currentRPointIndex == -1 || currentRPointIndex >= currentSchedule.getRPoints().size()) {
+            Log.d("Geofence", "No more pending route points for geofencing.");
             return;
         }
-        Schedule.StopDetail nextStopToMonitor = currentSchedule.getStops().get(currentStopIndex);
-        String stopId = nextStopToMonitor.getStopId();
-        new Stop().getStopLocationById(stopId, new Stop.StopLocationCallback() {
+        Schedule.RPointDetail nextRPointToMonitor = currentSchedule.getRPoints().get(currentRPointIndex);
+        String rpointId = nextRPointToMonitor.getRPointId();
+        new RoutePoint().getRPointLocationById(rpointId, new RoutePoint.RPointLocationCallback() {
             @Override
             public void onSuccess(LatLng location) {
                 Geofence geofence = new Geofence.Builder()
-                        .setRequestId(stopId)
+                        .setRequestId(rpointId)
                         .setCircularRegion(location.latitude, location.longitude, GEOFENCE_RADIUS_METERS)
                         .setExpirationDuration(GEOFENCE_EXPIRATION_IN_MILLISECONDS)
                         .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
                         .build();
                 if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                     geofencingClient.addGeofences(getGeofencingRequest(geofence), getGeofencePendingIntent())
-                            .addOnSuccessListener(aVoid -> Log.d("Geofence", "Geofence added for stop: " + stopId))
+                            .addOnSuccessListener(aVoid -> Log.d("Geofence", "Geofence added for route point: " + rpointId))
                             .addOnFailureListener(e -> {
                                 Log.e("Geofence", "Failed to add geofence: " + e.getMessage());
                                 if (e instanceof ApiException) {
@@ -328,7 +343,7 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
             }
             @Override
             public void onError(Exception e) {
-                Log.e("Geofence", "Error getting stop location for geofence: " + e.getMessage());
+                Log.e("Geofence", "Error getting route point location for geofence: " + e.getMessage());
             }
         });
     }
@@ -387,7 +402,7 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
                     for (Location location : locationResult.getLocations()) {
                         if (location != null) {
                             Log.d("LocationProximity", "Received location update: " + location.getLatitude() + ", " + location.getLongitude());
-                            checkProximityToNextStop(location);
+                            checkProximityToNextRPoint(location);
                         }
                     }
                 }
@@ -407,41 +422,41 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
         }
     }
 
-    private void checkProximityToNextStop(Location currentLocation) {
-        if (currentSchedule == null || currentStopIndex < 0 || currentStopIndex >= currentSchedule.getStops().size()) {
+    private void checkProximityToNextRPoint(Location currentLocation) {
+        if (currentSchedule == null || currentRPointIndex < 0 || currentRPointIndex >= currentSchedule.getRPoints().size()) {
             return;
         }
-        Schedule.StopDetail nextStop = currentSchedule.getStops().get(currentStopIndex);
-        new Stop().getStopLocationById(nextStop.getStopId(), new Stop.StopLocationCallback() {
+        Schedule.RPointDetail nextRPoint = currentSchedule.getRPoints().get(currentRPointIndex);
+        new RoutePoint().getRPointLocationById(nextRPoint.getRPointId(), new RoutePoint.RPointLocationCallback() {
             @Override
-            public void onSuccess(LatLng stopLatLng) {
+            public void onSuccess(LatLng rpointLatLng) {
                 float[] results = new float[1];
-                Location.distanceBetween(currentLocation.getLatitude(), currentLocation.getLongitude(), stopLatLng.latitude, stopLatLng.longitude, results);
+                Location.distanceBetween(currentLocation.getLatitude(), currentLocation.getLongitude(), rpointLatLng.latitude, rpointLatLng.longitude, results);
                 float distanceInMeters = results[0];
-                Log.d("ProximityCheck", "Distance to " + stopList.get(currentStopIndex) + ": " + distanceInMeters + " meters");
+                Log.d("ProximityCheck", "Distance to " + rpointList.get(currentRPointIndex) + ": " + distanceInMeters + " meters");
 
                 if (distanceInMeters <= 5) {
                     long arrivalTime = System.currentTimeMillis();
-                    nextStop.setActualArrivalTime(arrivalTime);
-                    nextStop.setStatus("arrived");
+                    nextRPoint.setActArrTime(arrivalTime);
+                    nextRPoint.setStatus("arrived");
 
                     // Calculate lateness
                     int lateness = ScheduleController.calculateLateness(
-                            nextStop.getExpectedArrivalTime(),
+                            nextRPoint.getExpArrTime(),
                             arrivalTime,
                             currentSchedule.getTripStartTime()
                     );
-                    nextStop.setLatenessMinutes(lateness);
+                    nextRPoint.setLatenessMinutes(lateness);
 
-                    // Record next stop departure if exists
-                    int nextIndex = currentStopIndex + 1;
-                    if (nextIndex < currentSchedule.getStops().size()) {
-                        Schedule.StopDetail nextStopDetail = currentSchedule.getStops().get(nextIndex);
-                        nextStopDetail.setActualDepartureTime(System.currentTimeMillis());
-                        nextStopDetail.setStatus("departed");
-                        currentSchedule.setCurrentStopIndex(nextIndex);
+                    // Record next route point departure if exists
+                    int nextIndex = currentRPointIndex + 1;
+                    if (nextIndex < currentSchedule.getRPoints().size()) {
+                        Schedule.RPointDetail nextRPointDetail = currentSchedule.getRPoints().get(nextIndex);
+                        nextRPointDetail.setActDepTime(System.currentTimeMillis());
+                        nextRPointDetail.setStatus("departed");
+                        currentSchedule.setCurrentRPointIndex(nextIndex);
                     } else {
-                        currentSchedule.setCurrentStopIndex(-1);
+                        currentSchedule.setCurrentRPointIndex(-1);
                         currentSchedule.setStatus("completed");
                         currentSchedule.setTripEndTime(System.currentTimeMillis());
                     }
@@ -450,12 +465,12 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
                     updateScheduleInFirestore();
 
                     // Update UI
-                    currentStopIndex = currentSchedule.getCurrentStopIndex();
-                    adapter.setCurrentStopIndex(currentStopIndex);
+                    currentRPointIndex = currentSchedule.getCurrentRPointIndex();
+                    adapter.setCurrentRPointIndex(currentRPointIndex);
                     adapter.notifyDataSetChanged();
 
-                    // Prepare for next stop or finish
-                    if (currentStopIndex != -1) {
+                    // Prepare for next route point or finish
+                    if (currentRPointIndex != -1) {
                         startGeofencing();
                     } else {
                         stopGeofencing();
@@ -467,7 +482,7 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
             }
             @Override
             public void onError(Exception e) {
-                Log.e("ProximityCheck", "Error getting stop location for proximity check: " + e.getMessage());
+                Log.e("ProximityCheck", "Error getting route point location for proximity check: " + e.getMessage());
             }
         });
     }
@@ -477,54 +492,71 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
                 .document(currentSchedule.getScheduleId())
                 .set(currentSchedule);
     }
-    private void fetchScheduleWithStopDetails(String scheduleId) {
+    private void fetchScheduleWithRPointDetails(String scheduleId) {
         FirebaseFirestore.getInstance().collection("schedules").document(scheduleId)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     currentSchedule = documentSnapshot.toObject(Schedule.class);
                     if (currentSchedule != null) {
-                        currentStopIndex = currentSchedule.getCurrentStopIndex(); // Assuming Schedule class has this field
-                        if (currentStopIndex == -1) { // If not explicitly set or completed
-                            currentStopIndex = findInitialCurrentStopIndex(currentSchedule);
+                        if ("event".equalsIgnoreCase(currentSchedule.getType())
+                                && currentSchedule.getRPoints() != null) {
+                            for (Schedule.RPointDetail rpoint : currentSchedule.getRPoints()) {
+                                if (rpoint.getStatus() == null)
+                                    rpoint.setStatus("scheduled");
+                                if (rpoint.getExpArrTime() == null)
+                                    rpoint.setExpArrTime("");
+                                if (rpoint.getExpDepTime() == null)
+                                    rpoint.setExpDepTime("");
+                                if (rpoint.getActArrTime() == null)
+                                    rpoint.setActArrTime(null);
+                                if (rpoint.getActDepTime() == null)
+                                    rpoint.setActDepTime(null);
+                                // latenessMinutes is int, default 0
+                            }
                         }
 
-                        resolveStopNames(currentSchedule.getStops(), stopNames -> {
-                            stopList.clear();
-                            stopList.addAll(stopNames);
-                            adapter.setStopDetails(currentSchedule.getStops());
-                            adapter.setCurrentStopIndex(currentStopIndex);
+                        currentRPointIndex = currentSchedule.getCurrentRPointIndex();
+                        if (currentRPointIndex == -1) {
+                            currentRPointIndex = findInitialCurrentRPointIndex(currentSchedule);
+                        }
+
+                        resolveRPointNames(currentSchedule.getRPoints(), rpointNames -> {
+                            rpointList.clear();
+                            rpointList.addAll(rpointNames);
+                            adapter.setRPointDetails(currentSchedule.getRPoints());
+                            adapter.setCurrentRPointIndex(currentRPointIndex);
                             adapter.notifyDataSetChanged();
                         });
                     }
                 });
     }
-    private int findInitialCurrentStopIndex(Schedule schedule) {
-        if (schedule == null || schedule.getStops() == null || schedule.getStops().isEmpty()) {
+    private int findInitialCurrentRPointIndex(Schedule schedule) {
+        if (schedule == null || schedule.getRPoints() == null || schedule.getRPoints().isEmpty()) {
             return -1;
         }
-         return schedule.getCurrentStopIndex(); // Assuming Schedule object stores this
+         return schedule.getCurrentRPointIndex();
     }
-    private void resolveStopNames(List<Schedule.StopDetail> stops, Consumer<List<String>> callback) {
-        String[] stopNamesArray = new String[stops.size()];
+    private void resolveRPointNames(List<Schedule.RPointDetail> rpoints, Consumer<List<String>> callback) {
+        String[] rpointNamesArray = new String[rpoints.size()];
         AtomicInteger counter = new AtomicInteger(0);
 
-        for (int i = 0; i < stops.size(); i++) {
+        for (int i = 0; i < rpoints.size(); i++) {
             int currentIndex = i;
-            Schedule.StopDetail stop = stops.get(i);
-            new Stop().getStopNameById(stop.getStopId(), new Stop.StopCallback() {
+            Schedule.RPointDetail rpoint = rpoints.get(i);
+            new RoutePoint().getRPointNameById(rpoint.getRPointId(), new RoutePoint.RPointCallback() {
                 @Override
-                public void onSuccess(String name) {
-                    stopNamesArray[currentIndex] = name;
-                    if (counter.incrementAndGet() == stops.size()) {
-                        List<String> orderedNames = new ArrayList<>(Arrays.asList(stopNamesArray));
+                public void onSuccess(String rpointName) {
+                    rpointNamesArray[currentIndex] = rpointName;
+                    if (counter.incrementAndGet() == rpoints.size()) {
+                        List<String> orderedNames = new ArrayList<>(Arrays.asList(rpointNamesArray));
                         callback.accept(orderedNames);
                     }
                 }
                 @Override
                 public void onError(Exception e) {
-                    stopNamesArray[currentIndex] = "Unknown Stop";
-                    if (counter.incrementAndGet() == stops.size()) {
-                        List<String> orderedNames = new ArrayList<>(Arrays.asList(stopNamesArray));
+                    rpointNamesArray[currentIndex] = "Unknown Route Point";
+                    if (counter.incrementAndGet() == rpoints.size()) {
+                        List<String> orderedNames = new ArrayList<>(Arrays.asList(rpointNamesArray));
                         callback.accept(orderedNames);
                     }
                 }
@@ -534,21 +566,45 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
     private void startTrip() {
         currentSchedule.setTripStartTime(System.currentTimeMillis());
         currentSchedule.setStatus("in_progress");
-        currentStopIndex = 0;
-        currentSchedule.setCurrentStopIndex(currentStopIndex);
+        // currentRPointIndex = 0;
+        // currentSchedule.setCurrentRPointIndex(currentRPointIndex);
 
-        // Record departure for first stop
-        if (!currentSchedule.getStops().isEmpty()) {
-            Schedule.StopDetail firstStop = currentSchedule.getStops().get(0);
-            firstStop.setActualDepartureTime(System.currentTimeMillis());
-            firstStop.setStatus("departed");
-            currentSchedule.setCurrentStopIndex(0);
+        // // Record departure for first route point
+        // if (!currentSchedule.getRPoints().isEmpty()) {
+        //     Schedule.RPointDetail firstRPoint = currentSchedule.getRPoints().get(0);
+        //     firstRPoint.setActDepTime(System.currentTimeMillis());
+        //     firstRPoint.setStatus("departed");
+        //     currentSchedule.setCurrentRPointIndex(0);
+        // }
+        // updateScheduleInFirestore();
+        // adapter.setCurrentRPointIndex(currentRPointIndex);
+        // adapter.notifyDataSetChanged();
+        // startGeofencing();
+        // startLocationUpdatesForProximity();
+        if (!"event".equalsIgnoreCase(currentSchedule.getType())) {
+            currentRPointIndex = 0;
+            currentSchedule.setCurrentRPointIndex(currentRPointIndex);
+    
+            if (!currentSchedule.getRPoints().isEmpty()) {
+                Schedule.RPointDetail firstRPoint = currentSchedule.getRPoints().get(0);
+                firstRPoint.setActDepTime(System.currentTimeMillis());
+                firstRPoint.setStatus("departed");
+            }
+            startGeofencing();
+            startLocationUpdatesForProximity();
+        } else {
+            currentRPointIndex = -1;
+            currentSchedule.setCurrentRPointIndex(-1);
         }
         updateScheduleInFirestore();
-        adapter.setCurrentStopIndex(currentStopIndex);
+        adapter.setCurrentRPointIndex(currentRPointIndex);
         adapter.notifyDataSetChanged();
-        startGeofencing();
-        startLocationUpdatesForProximity();
+
+        // Only start geofencing if NOT event type
+        if (!"event".equalsIgnoreCase(currentSchedule.getType())) {
+            startGeofencing();
+            startLocationUpdatesForProximity();
+        }
     }
 
     @SuppressLint("SetTextI18n")
@@ -597,7 +653,7 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
             requireActivity().startService(new Intent(requireActivity(), TrackingService.class));
 
             // Restart geofencing and proximity checks
-            if (currentSchedule != null && currentStopIndex != -1) {
+            if (currentSchedule != null && currentRPointIndex != -1) {
                 startGeofencing();
                 startLocationUpdatesForProximity();
             }
@@ -663,20 +719,20 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
                 mapController.initializeMapFeatures();
 
                 fetchAndDrawRoute();
-                if (!stopLocations.isEmpty()) {
-                    mapController.addRouteMarkers(stopLocations, stopList);
-                    getRoutePathFromDirections(stopLocations);
+                if (!rpointLocations.isEmpty()) {
+                    mapController.addRouteMarkers(rpointLocations, rpointList);
+                    getRoutePathFromDirections(rpointLocations);
                 }
             });
         }
     }
     private void fetchAndDrawRoute() {
-        Route.getRouteStopLocations(routeId, new Route.OnStopsLocationResolvedListener() {
+        Route.getRPointLocations(routeId, new Route.OnRPointsLocationResolvedListener() {
             @Override
-            public void onStopsLocationResolved(List<LatLng> locations) {
-                stopLocations = locations;
+            public void onRPointsLocationResolved(List<LatLng> locations) {
+                rpointLocations = locations;
                 if (mapController != null && !locations.isEmpty()) {
-                    mapController.addRouteMarkers(locations, stopList);
+                    mapController.addRouteMarkers(locations, rpointList);
                     getRoutePathFromDirections(locations);
                 }
             }
@@ -841,13 +897,13 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
             if (intent != null && GEOFENCE_BROADCAST_ACTION.equals(intent.getAction())) {
                 int geofenceTransition = intent.getIntExtra("transitionType", -1);
                 String triggeredGeofenceId = intent.getStringExtra("geofenceId");
-                String stopName = intent.getStringExtra("stopName"); // Passed from TrackingService
+                String rpointName = intent.getStringExtra("rpointName");
 
                 if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER &&
-                        currentSchedule != null && currentStopIndex != -1 &&
-                        currentStopIndex < currentSchedule.getStops().size() &&
-                        triggeredGeofenceId.equals(currentSchedule.getStops().get(currentStopIndex).getStopId())) {
-                    Log.d("GeofenceReceiver", "Entered geofence for stop: " + stopName);
+                        currentSchedule != null && currentRPointIndex != -1 &&
+                        currentRPointIndex < currentSchedule.getRPoints().size() &&
+                        triggeredGeofenceId.equals(currentSchedule.getRPoints().get(currentRPointIndex).getRPointId())) {
+                    Log.d("GeofenceReceiver", "Entered geofence for route point: " + rpointName);
                 }
             }
         }

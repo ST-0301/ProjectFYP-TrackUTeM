@@ -9,55 +9,55 @@ import java.util.function.Consumer;
 public class Schedule {
     private String scheduleId;
     private String day;
+    private String date;
     private String type;
     private String time;
     private String routeId;
     private String driverId;
     private String busId;
     private String status; // "scheduled", "in_progress", "completed"
-    private List<StopDetail> stops;
+    @PropertyName("rpoints")
+    private List<RPointDetail> rpoints;
     private long tripStartTime;
     private long tripEndTime;
-    private int currentStopIndex = -1;
+    private int currentRPointIndex = -1;
 
-    public Schedule() {}
-    public static class StopDetail {
-        private String stopId;
-        private String expectedArrivalTime;
-        private String expectedDepartureTime;
-        private Long actualArrivalTime;
-        private Long actualDepartureTime;
+    public Schedule() {
+        this.day = "";
+        this.status = "scheduled";
+    }
+    public static class RPointDetail {
+        @PropertyName("rpointId")
+        private String rpointId;
+        private String expArrTime;
+        private String expDepTime;
+        private Long actArrTime;
+        private Long actDepTime;
         private int latenessMinutes;
         private String status; // "scheduled", "departed", "arrived"
 
-        public StopDetail() {}
-        public StopDetail(String stopId, String expectedArrivalTime, String expectedDepartureTime) {
-            this.stopId = stopId;
-            this.expectedArrivalTime = expectedArrivalTime;
-            this.expectedDepartureTime = expectedDepartureTime;
-            this.status = "scheduled";
-        }
+        public RPointDetail() {}
 
-        @PropertyName("stopId")
-        public String getStopId() { return stopId; }
-        @PropertyName("stopId")
-        public void setStopId(String stopId) { this.stopId = stopId; }
-        @PropertyName("expectedArrivalTime")
-        public String getExpectedArrivalTime() { return expectedArrivalTime; }
-        @PropertyName("expectedArrivalTime")
-        public void setExpectedArrivalTime(String expectedArrivalTime) { this.expectedArrivalTime = expectedArrivalTime; }
-        @PropertyName("expectedDepartureTime")
-        public String getExpectedDepartureTime() { return expectedDepartureTime; }
-        @PropertyName("expectedDepartureTime")
-        public void setExpectedDepartureTime(String expectedDepartureTime) { this.expectedDepartureTime = expectedDepartureTime; }
-        @PropertyName("actualArrivalTime")
-        public Long getActualArrivalTime() { return actualArrivalTime; }
-        @PropertyName("actualArrivalTime")
-        public void setActualArrivalTime(Long actualArrivalTime) { this.actualArrivalTime = actualArrivalTime; }
-        @PropertyName("actualDepartureTime")
-        public Long getActualDepartureTime() { return actualDepartureTime; }
-        @PropertyName("actualDepartureTime")
-        public void setActualDepartureTime(Long actualDepartureTime) { this.actualDepartureTime = actualDepartureTime; }
+        @PropertyName("rpointId")
+        public String getRPointId() { return rpointId; }
+        @PropertyName("rpointId")
+        public void setRPointId(String rpointId) { this.rpointId = rpointId; }
+        @PropertyName("expArrTime")
+        public String getExpArrTime() { return expArrTime; }
+        @PropertyName("expArrTime")
+        public void setExpArrTime(String expArrTime) { this.expArrTime = expArrTime; }
+        @PropertyName("expDepTime")
+        public String getExpDepTime() { return expDepTime; }
+        @PropertyName("expDepTime")
+        public void setExpDepTime(String expDepTime) { this.expDepTime = expDepTime; }
+        @PropertyName("actArrTime")
+        public Long getActArrTime() { return actArrTime; }
+        @PropertyName("actArrTime")
+        public void setActArrTime(Long actArrTime) { this.actArrTime = actArrTime; }
+        @PropertyName("actDepTime")
+        public Long getActDepTime() { return actDepTime; }
+        @PropertyName("actDepTime")
+        public void setActDepTime(Long actDepTime) { this.actDepTime = actDepTime; }
         @PropertyName("latenessMinutes")
         public int getLatenessMinutes() { return latenessMinutes; }
         @PropertyName("latenessMinutes")
@@ -75,6 +75,10 @@ public class Schedule {
     public String getDay() { return day; }
     @PropertyName("day")
     public void setDay(String day) { this.day = day.toLowerCase(Locale.ENGLISH); }
+    @PropertyName("date")
+    public String getDate() { return date; }
+    @PropertyName("date")
+    public void setDate(String date) { this.date = date; }
     @PropertyName("type")
     public String getType() { return type; }
     @PropertyName("type")
@@ -99,21 +103,22 @@ public class Schedule {
     public String getStatus() { return status; }
     @PropertyName("status")
     public void setStatus(String status) { this.status = status; }
-    @PropertyName("stops")
-    public List<StopDetail> getStops() { return stops; }
-    public void setStops(List<StopDetail> stops) { this.stops = stops; }
+    @PropertyName("rpoints")
+    public List<RPointDetail> getRPoints() { return rpoints; }
+    @PropertyName("rpoints")
+    public void setRPoints(List<RPointDetail> rpoints) { this.rpoints = rpoints; }
     @PropertyName("tripStartTime")
     public long getTripStartTime() { return tripStartTime; }
     @PropertyName("tripStartTime")
     public void setTripStartTime(long tripStartTime) { this.tripStartTime = tripStartTime; }
-    @PropertyName("tripStartTime")
+    @PropertyName("tripEndTime")
     public long getTripEndTime() { return tripEndTime; }
-    @PropertyName("tripStartTime")
+    @PropertyName("tripEndTime")
     public void setTripEndTime(long tripEndTime) { this.tripEndTime = tripEndTime; }
-    @PropertyName("currentStopIndex")
-    public int getCurrentStopIndex() { return currentStopIndex; }
-    @PropertyName("currentStopIndex")
-    public void setCurrentStopIndex(int currentStopIndex) { this.currentStopIndex = currentStopIndex; }
+    @PropertyName("currentRPointIndex")
+    public int getCurrentRPointIndex() { return currentRPointIndex; }
+    @PropertyName("currentRPointIndex")
+    public void setCurrentRPointIndex(int currentRPointIndex) { this.currentRPointIndex = currentRPointIndex; }
 
     // Interface
     public interface OnSchedulesRetrieved {

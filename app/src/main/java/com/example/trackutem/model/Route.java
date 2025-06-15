@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Route {
     private String routeId;
     private String name;
-    private List<String> stops;
+    private List<String> rpoints;
     private String created;
 
     public Route() {}
@@ -26,10 +26,10 @@ public class Route {
     public String getName() { return name; }
     @PropertyName("name")
     public void setName(String name) { this.name = name; }
-    @PropertyName("stops")
-    public List<String> getStops() { return stops; }
-    @PropertyName("stops")
-    public void setStops(List<String> stops) { this.stops = stops; }
+    @PropertyName("rpoints")
+    public List<String> getRPoints() { return rpoints; }
+    @PropertyName("rpoints")
+    public void setRPoints(List<String> rpoints) { this.rpoints = rpoints; }
     @PropertyName("created")
     public String getCreated() { return created; }
     @PropertyName("created")
@@ -40,20 +40,20 @@ public class Route {
         void onSuccess(String routeName);
         void onError(Exception e);
     }
-    public interface StopNamesCallback {
-        void onSuccess(List<String> stopNames);
+    public interface RPointNamesCallback {
+        void onSuccess(List<String> rpointNames);
         void onError(Exception e);
     }
-    interface StopLocationsCallback {
+    interface RPointLocationsCallback {
         void onSuccess(List<LatLng> locations);
         void onError(Exception e);
     }
-    public interface OnStopsResolvedListener {
-        void onStopsResolved(List<String> stopNames);
+    public interface OnRPointsResolvedListener {
+        void onRPointsResolved(List<String> rpointNames);
         void onError(Exception e);
     }
-    public interface OnStopsLocationResolvedListener {
-        void onStopsLocationResolved(List<LatLng> locations);
+    public interface OnRPointsLocationResolvedListener {
+        void onRPointsLocationResolved(List<LatLng> locations);
         void onError(Exception e);
     }
 
@@ -75,18 +75,18 @@ public class Route {
                 })
                 .addOnFailureListener(callback::onError);
     }
-    public static void getRouteStops(String routeId, OnStopsResolvedListener listener) {
+    public static void getRouteRPoints(String routeId, OnRPointsResolvedListener listener) {
         FirebaseFirestore.getInstance().collection("routes").document(routeId)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
                         Route route = documentSnapshot.toObject(Route.class);
-                        if (route != null && route.getStops() != null) {
-                            Stop stopResolver = new Stop();
-                            resolveStopNames(route.getStops(), stopResolver, new StopNamesCallback() {
+                        if (route != null && route.getRPoints() != null) {
+                            RoutePoint rpointResolver = new RoutePoint();
+                            resolveRPointNames(route.getRPoints(), rpointResolver, new RPointNamesCallback() {
                                 @Override
-                                public void onSuccess(List<String> stopNames) {
-                                    listener.onStopsResolved(stopNames);
+                                public void onSuccess(List<String> rpointNames) {
+                                    listener.onRPointsResolved(rpointNames);
                                 }
                                 @Override
                                 public void onError(Exception e) {
@@ -94,25 +94,25 @@ public class Route {
                                 }
                             });
                         } else {
-                            listener.onError(new Exception("Route or stops not found"));
+                            listener.onError(new Exception("Route or route points not found"));
                         }
                     } else {
                         listener.onError(new Exception("Route document not found"));
                     }
                 }).addOnFailureListener(listener::onError);
     }
-    public static void getRouteStopLocations(String routeId, OnStopsLocationResolvedListener listener) {
+    public static void getRPointLocations(String routeId, OnRPointsLocationResolvedListener listener) {
         FirebaseFirestore.getInstance().collection("routes").document(routeId)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
                         Route route = documentSnapshot.toObject(Route.class);
-                        if (route != null && route.getStops() != null) {
-                            List<String> stopIds = route.getStops();
-                            resolveStopLocations(stopIds, new StopLocationsCallback() {
+                        if (route != null && route.getRPoints() != null) {
+                            List<String> rpointIds = route.getRPoints();
+                            resolveRPointLocations(rpointIds, new RPointLocationsCallback() {
                                 @Override
                                 public void onSuccess(List<LatLng> locations) {
-                                    listener.onStopsLocationResolved(locations);
+                                    listener.onRPointsLocationResolved(locations);
                                 }
                                 @Override
                                 public void onError(Exception e) {
@@ -120,7 +120,7 @@ public class Route {
                                 }
                             });
                         } else {
-                            listener.onError(new Exception("Route or stops not found"));
+                            listener.onError(new Exception("Route or route points not found"));
                         }
                     } else {
                         listener.onError(new Exception("Route document not found"));
@@ -129,52 +129,52 @@ public class Route {
     }
 
     // Helper Methods
-    private static void resolveStopLocations(List<String> stopIds, StopLocationsCallback callback) {
-        if (stopIds == null || stopIds.isEmpty()) {
+    private static void resolveRPointLocations(List<String> rpointIds, RPointLocationsCallback callback) {
+        if (rpointIds == null || rpointIds.isEmpty()) {
             callback.onSuccess(new ArrayList<>());
             return;
         }
         final List<LatLng> locations = new ArrayList<>();
         final AtomicInteger count = new AtomicInteger(0);
-        final Stop stopResolver = new Stop();
+        final RoutePoint rpointResolver = new RoutePoint();
 
-        for (String stopId : stopIds) {
-            stopResolver.getStopLocationById(stopId, new Stop.StopLocationCallback() {
+        for (String rpointId : rpointIds) {
+            rpointResolver.getRPointLocationById(rpointId, new RoutePoint.RPointLocationCallback() {
                 @Override
                 public void onSuccess(LatLng location) {
                     locations.add(location);
-                    if (count.incrementAndGet() == stopIds.size()) {
+                    if (count.incrementAndGet() == rpointIds.size()) {
                         callback.onSuccess(locations);
                     }
                 }
                 @Override
                 public void onError(Exception e) {
-                    Log.e("Route", "Error resolving location for stopId: " + stopId + ", Error: " + e.getMessage());
+                    Log.e("Route", "Error resolving location for rpointId: " + rpointId + ", Error: " + e.getMessage());
 
-                    if (count.incrementAndGet() == stopIds.size()) {
+                    if (count.incrementAndGet() == rpointIds.size()) {
                         callback.onSuccess(locations); // Return partial results
                     }
                 }
             });
         }
     }
-    public static void resolveStopNames(List<String> stopIds, Stop stop, StopNamesCallback callback) {
-        if (stopIds == null || stopIds.isEmpty()) {
+    public static void resolveRPointNames(List<String> rpointIds, RoutePoint rpoint, RPointNamesCallback callback) {
+        if (rpointIds == null || rpointIds.isEmpty()) {
             callback.onSuccess(new ArrayList<>());
             return;
         }
-        final String[] orderedStopNames = new String[stopIds.size()];
+        final String[] orderedRPointNames = new String[rpointIds.size()];
         final AtomicInteger completedCount = new AtomicInteger(0);
 
-        for (int i = 0; i < stopIds.size(); i++) {
+        for (int i = 0; i < rpointIds.size(); i++) {
             final int currentIndex = i;
-            String stopId = stopIds.get(i);
-            stop.getStopNameById(stopId, new Stop.StopCallback() {
+            String rpointId = rpointIds.get(i);
+            rpoint.getRPointNameById(rpointId, new RoutePoint.RPointCallback() {
                 @Override
-                public void onSuccess(String stopName) {
-                    orderedStopNames[currentIndex] = stopName;
-                    if (completedCount.incrementAndGet() == stopIds.size()) {
-                        callback.onSuccess(Arrays.asList(orderedStopNames));
+                public void onSuccess(String rpointName) {
+                    orderedRPointNames[currentIndex] = rpointName;
+                    if (completedCount.incrementAndGet() == rpointIds.size()) {
+                        callback.onSuccess(Arrays.asList(orderedRPointNames));
                     }
                 }
                 @Override

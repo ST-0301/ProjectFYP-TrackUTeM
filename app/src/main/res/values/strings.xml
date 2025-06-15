@@ -1,7 +1,5 @@
 <resources>
     <string name="app_name">TrackUTeM</string>
-<!--    <string name="stop_item_description">Stop: %1$s</string>-->
-
     <string name="google_maps_key">AIzaSyBl-nh_O2qL1Ovy-DRpS4emqsDkT6kB04E</string>
     <string name="directions_api_key">AIzaSyDqFhzoWaZZlOmS8eXcnBzZ74P-qKT9IMs</string>
 

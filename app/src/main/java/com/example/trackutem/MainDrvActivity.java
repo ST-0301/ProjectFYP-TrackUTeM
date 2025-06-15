@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 import com.example.trackutem.databinding.ActivityMaindrvBinding;
@@ -47,20 +48,31 @@ public class MainDrvActivity extends AppCompatActivity {
         driverId = prefs.getString("driverId", null);
 
         navView = findViewById(R.id.nav_view);
-        navView.setSelectedItemId(R.id.navigation_home);
-        switchTo(new HomeDrvFragment(), "Home");
+//        navView.setSelectedItemId(R.id.navigation_home);
+//        switchTo(new HomeDrvFragment(), "Home");
+        //hide home
+        ScheduleFragment scheduleFragment = new ScheduleFragment();
+        Bundle args = new Bundle();
+        args.putString("driverId", driverId);
+        scheduleFragment.setArguments(args);
+        navView.setSelectedItemId(R.id.navigation_trip);
+        switchTo(scheduleFragment, "Trips");
 
         navView.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
             Fragment fragment;
             String title;
 
-            if (id == R.id.navigation_home) {
+            //hide home
+            /*if (id == R.id.navigation_home) {
                 fragment = new HomeDrvFragment();
                 title = "Home";
             }
-            else if (id == R.id.navigation_trip) {
+            else */if (id == R.id.navigation_trip) {
                 fragment = new ScheduleFragment();
+                Bundle args1 = new Bundle();
+                args1.putString("driverId", driverId);
+                fragment.setArguments(args1);
                 title = "Trips";
             }
             else if (id == R.id.navigation_notifications) {
@@ -74,11 +86,12 @@ public class MainDrvActivity extends AppCompatActivity {
             else {
                 return false;
             }
-            if (fragment != null) {
-                Bundle args = new Bundle();
-                args.putString("driverId", driverId);
-                fragment.setArguments(args);
-            }
+            //hide home
+//            if (fragment != null) {
+////                Bundle args = new Bundle();
+//                args.putString("driverId", driverId);
+//                fragment.setArguments(args);
+//            }
             switchTo(fragment, title);
             return true;
         });

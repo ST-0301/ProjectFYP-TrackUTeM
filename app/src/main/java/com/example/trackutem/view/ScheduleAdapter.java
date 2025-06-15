@@ -29,16 +29,35 @@ public class ScheduleAdapter extends RecyclerView.Adapter<ScheduleAdapter.Schedu
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_schedule, parent, false);
         return new ScheduleViewHolder(view);
     }
+    
+    // ...existing code...
     @Override
     public void onBindViewHolder(@NonNull ScheduleViewHolder holder, int position) {
         Schedule schedule = schedules.get(position);
 
         // Format and display day in a modern chip
         String day = schedule.getDay();
+        String chipDayText = "";
         if (day != null && !day.isEmpty()) {
             // Capitalize day: "monday" -> "Monday"
             String formattedDay = day.substring(0, 1).toUpperCase() + day.substring(1);
-            holder.chipDay.setText(formattedDay);
+
+            // If type is "event" and date is present, append date
+            String type = schedule.getType() != null ? schedule.getType() : "";
+            String date = null;
+            try {
+                // Use reflection to get 'date' if present (for backward compatibility)
+                java.lang.reflect.Method getDateMethod = schedule.getClass().getMethod("getDate");
+                date = (String) getDateMethod.invoke(schedule);
+            } catch (Exception ignored) {
+            }
+
+            if ("event".equalsIgnoreCase(type) && date != null && !date.isEmpty()) {
+                chipDayText = formattedDay + " " + date;
+            } else {
+                chipDayText = formattedDay;
+            }
+            holder.chipDay.setText(chipDayText);
             holder.chipDay.setVisibility(View.VISIBLE);
         } else {
             holder.chipDay.setVisibility(View.GONE);
@@ -64,6 +83,7 @@ public class ScheduleAdapter extends RecyclerView.Adapter<ScheduleAdapter.Schedu
                     holder.tvRoute.setText(routeName);
                 }
             }
+
             @Override
             public void onError(Exception e) {
                 if (holder.getAdapterPosition() == position) {
@@ -73,9 +93,10 @@ public class ScheduleAdapter extends RecyclerView.Adapter<ScheduleAdapter.Schedu
         });
 
         holder.chipStatus.setText(schedule.getStatus() != null ? schedule.getStatus() : "scheduled");
-        holder.itemView.setOnClickListener(v -> listener.onScheduleClick(schedule)
-        );
+        holder.itemView.setOnClickListener(v -> listener.onScheduleClick(schedule));
     }
+
+    // ...existing code...
     @Override
     public int getItemCount() {
         return schedules != null ? schedules.size() : 0;

@@ -9,7 +9,7 @@
     android:clickable="true"
     android:focusable="true">
 
-    <!-- Stop Indicator -->
+    <!-- Route Point Indicator -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/indicatorCard"
         android:layout_width="32dp"
@@ -20,11 +20,11 @@
         app:strokeWidth="2dp"
         app:cardBackgroundColor="@android:color/white"
         app:layout_constraintStart_toStartOf="@id/guideline"
-        app:layout_constraintTop_toTopOf="@id/tvStopName"
-        app:layout_constraintBottom_toBottomOf="@id/tvStopName">
+        app:layout_constraintTop_toTopOf="@id/tvRPointName"
+        app:layout_constraintBottom_toBottomOf="@id/tvRPointName">
 
         <ImageView
-            android:id="@+id/stopIndicator"
+            android:id="@+id/rpointIndicator"
             android:layout_width="16dp"
             android:layout_height="16dp"
             android:layout_gravity="center"
@@ -32,13 +32,13 @@
             app:tint="@color/primaryBlue" />
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- Stop Name -->
+    <!-- Route Point Name -->
     <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/tvStopName"
+        android:id="@+id/tvRPointName"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:contentDescription="Stop: %1$s"
+        android:contentDescription="Route Point: %1$s"
         android:lineSpacingExtra="4dp"
         android:textColor="?attr/colorOnSurface"
         android:textSize="16sp"
@@ -56,8 +56,8 @@
         android:layout_marginTop="4dp"
         android:textSize="12sp"
         android:textColor="@color/colorError"
-        app:layout_constraintStart_toStartOf="@id/tvStopName"
-        app:layout_constraintTop_toBottomOf="@id/tvStopName"
+        app:layout_constraintStart_toStartOf="@id/tvRPointName"
+        app:layout_constraintTop_toBottomOf="@id/tvRPointName"
         app:layout_constraintBottom_toTopOf="@+id/barrier"/>
 
     <!-- Barrier to handle dynamic content -->
@@ -66,8 +66,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:barrierDirection="bottom"
-        app:constraint_referenced_ids="tvStopName,tvLateness"
-        app:layout_constraintTop_toBottomOf="@id/tvStopName"/>
+        app:constraint_referenced_ids="tvRPointName,tvLateness"
+        app:layout_constraintTop_toBottomOf="@id/tvRPointName"/>
 
     <!-- Arrival Button -->
     <Button
@@ -78,8 +78,8 @@
         android:text="Arrived"
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/tvStopName"
-        app:layout_constraintBottom_toBottomOf="@id/tvStopName"
+        app:layout_constraintTop_toTopOf="@id/tvRPointName"
+        app:layout_constraintBottom_toBottomOf="@id/tvRPointName"
         android:layout_marginEnd="8dp" />
 
     <!-- Divider -->
@@ -90,7 +90,7 @@
         android:background="?attr/colorOutlineVariant"
         android:alpha="0.2"
         app:layout_constraintTop_toBottomOf="@id/barrier"
-        app:layout_constraintStart_toStartOf="@id/tvStopName"
+        app:layout_constraintStart_toStartOf="@id/tvRPointName"
         app:layout_constraintEnd_toEndOf="parent"/>
 
     <androidx.constraintlayout.widget.Guideline

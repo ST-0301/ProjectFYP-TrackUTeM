@@ -1,4 +1,4 @@
-// Stop.java
+// RoutePoint.java
 package com.example.trackutem.model;
 
 import com.google.android.gms.maps.model.LatLng;
@@ -6,17 +6,17 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.PropertyName;
 
-public class Stop {
-    private String stopId;
+public class RoutePoint {
+    private String rpointId;
     private String name;
     private GeoPoint location;
 
-    public Stop() {}
+    public RoutePoint() {}
 
-    @PropertyName("stopId")
-    public String getStopId() { return stopId; }
-    @PropertyName("stopId")
-    public void setStopId(String stopId) { this.stopId = stopId; }
+    @PropertyName("rpointId")
+    public String getRPointId() { return rpointId; }
+    @PropertyName("rpointId")
+    public void setRPointId(String rpointId) { this.rpointId = rpointId; }
     @PropertyName("name")
     public String getName() { return name; }
     @PropertyName("name")
@@ -27,51 +27,51 @@ public class Stop {
     public void setLocation(GeoPoint location) { this.location = location; }
 
     // Interfaces
-    public interface StopLocationCallback {
+    public interface RPointLocationCallback {
         void onSuccess(LatLng location);
         void onError(Exception e);
     }
-    public interface StopCallback {
-        void onSuccess(String stopName);
+    public interface RPointCallback {
+        void onSuccess(String rpointName);
         void onError(Exception e);
     }
 
     // Firebase Operations
-    public void getStopLocationById(String stopId, StopLocationCallback callback) {
+    public void getRPointLocationById(String rpointId, RPointLocationCallback callback) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        db.collection("stops")
-                .document(stopId)
+        db.collection("routePoints")
+                .document(rpointId)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
-                        Stop stop = documentSnapshot.toObject(Stop.class);
-                        if (stop != null && stop.getLocation() != null) {
-                            GeoPoint geoPoint = stop.getLocation();
+                        RoutePoint rpoint = documentSnapshot.toObject(RoutePoint.class);
+                        if (rpoint != null && rpoint.getLocation() != null) {
+                            GeoPoint geoPoint = rpoint.getLocation();
                             callback.onSuccess(new LatLng(geoPoint.getLatitude(), geoPoint.getLongitude()));
                         } else {
-                            callback.onError(new Exception("Stop location not found"));
+                            callback.onError(new Exception("Route Point location not found"));
                         }
                     } else {
-                        callback.onError(new Exception("Stop not found"));
+                        callback.onError(new Exception("Route Point not found"));
                     }
                 })
                 .addOnFailureListener(callback::onError);
     }
-    public void getStopNameById(String stopId, StopCallback callback) {
+    public void getRPointNameById(String rpointId, RPointCallback callback) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        db.collection("stops")
-                .document(stopId)
+        db.collection("routePoints")
+                .document(rpointId)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
-                        Stop stop = documentSnapshot.toObject(Stop.class);
-                        if (stop != null) {
-                            callback.onSuccess(stop.getName());
+                        RoutePoint rpoint = documentSnapshot.toObject(RoutePoint.class);
+                        if (rpoint != null) {
+                            callback.onSuccess(rpoint.getName());
                         } else {
-                            callback.onError(new Exception("Stop data corrupted"));
+                            callback.onError(new Exception("Route Point data corrupted"));
                         }
                     } else {
-                        callback.onError(new Exception("Stop not found"));
+                        callback.onError(new Exception("Route Point not found"));
                     }
                 })
                 .addOnFailureListener(callback::onError);

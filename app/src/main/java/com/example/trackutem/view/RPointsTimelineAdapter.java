@@ -1,4 +1,4 @@
-// StopsTimelineAdapter.java
+// RPointsTimelineAdapter.java
 package com.example.trackutem.view;
 
 import android.content.Context;
@@ -14,68 +14,68 @@ import com.example.trackutem.R;
 import com.example.trackutem.model.Schedule;
 import java.util.List;
 
-public class StopsTimelineAdapter extends RecyclerView.Adapter<StopsTimelineAdapter.ViewHolder> {
+public class RPointsTimelineAdapter extends RecyclerView.Adapter<RPointsTimelineAdapter.ViewHolder> {
     private final Context context;
-    private final List<String> stopList;
-    private List<Schedule.StopDetail> stopDetails;
+    private final List<String> rpointList;
+    private List<Schedule.RPointDetail> rpointDetails;
     private OnActionButtonClickListener listener;
-    private int currentStopIndex = -1;
+    private int currentRPointIndex = -1;
 
-    public StopsTimelineAdapter(Context context, List<String> stopList) {
+    public RPointsTimelineAdapter(Context context, List<String> rpointList) {
         this.context = context;
-        this.stopList = stopList;
+        this.rpointList = rpointList;
     }
-    public void setStopDetails(List<Schedule.StopDetail> stopDetails) {
-        this.stopDetails = stopDetails;
+    public void setRPointDetails(List<Schedule.RPointDetail> rpointDetails) {
+        this.rpointDetails = rpointDetails;
     }
-    public void setCurrentStopIndex(int index) {
-        currentStopIndex = index;
+    public void setCurrentRPointIndex(int index) {
+        currentRPointIndex = index;
     }
 
     // Adapter Implementation
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_stop_timeline, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_rpoint_timeline, parent, false);
         return new ViewHolder(view);
     }
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        String stopName = stopList.get(position);
-        holder.tvStopName.setText(stopName);
+        String rpointName = rpointList.get(position);
+        holder.tvRPointName.setText(rpointName);
 
-        boolean isLastStop = (position == stopList.size() - 1);
+        boolean isLastRPoint = (position == rpointList.size() - 1);
         holder.btnArrival.setOnClickListener(v -> {
-            if (listener != null) listener.onArrivalClicked(position, isLastStop);
+            if (listener != null) listener.onArrivalClicked(position, isLastRPoint);
         });
 
-        if (stopDetails != null && position < stopDetails.size()) {
-            Schedule.StopDetail stop = stopDetails.get(position);
+        if (rpointDetails != null && position < rpointDetails.size()) {
+            Schedule.RPointDetail rpoint = rpointDetails.get(position);
 
-            // Only show button for current departed stop
-            boolean showButton = (position == currentStopIndex && "departed".equals(stop.getStatus()) && (currentStopIndex != -1));
+            // Only show button for current departed route point
+            boolean showButton = (position == currentRPointIndex && "departed".equals(rpoint.getStatus()) && (currentRPointIndex != -1));
             holder.btnArrival.setVisibility(showButton ? View.VISIBLE : View.GONE);
 
             // Update status indicator
-            switch (stop.getStatus()) {
+            switch (rpoint.getStatus()) {
                 case "arrived":
-                    holder.stopIndicator.setImageResource(R.drawable.ic_arrived);
+                    holder.rpointIndicator.setImageResource(R.drawable.ic_arrived);
                     holder.btnArrival.setVisibility(showButton ? View.VISIBLE : View.GONE);
                     break;
                 case "departed":
-                    holder.stopIndicator.setImageResource(R.drawable.ic_departed);
+                    holder.rpointIndicator.setImageResource(R.drawable.ic_departed);
                     holder.btnArrival.setVisibility(showButton ? View.VISIBLE : View.GONE);
                     break;
                 default:
-                    holder.stopIndicator.setImageResource(R.drawable.ic_location);
+                    holder.rpointIndicator.setImageResource(R.drawable.ic_location);
                     break;
             }
 
             // Show lateness if available
-            if (stop.getLatenessMinutes() != 0) {
-                String latenessText = stop.getLatenessMinutes() > 0 ?
-                        "+" + stop.getLatenessMinutes() + " min" :
-                        stop.getLatenessMinutes() + " min";
+            if (rpoint.getLatenessMinutes() != 0) {
+                String latenessText = rpoint.getLatenessMinutes() > 0 ?
+                        "+" + rpoint.getLatenessMinutes() + " min" :
+                        rpoint.getLatenessMinutes() + " min";
                 holder.tvLateness.setText(latenessText);
                 holder.tvLateness.setVisibility(View.VISIBLE);
             } else {
@@ -85,7 +85,7 @@ public class StopsTimelineAdapter extends RecyclerView.Adapter<StopsTimelineAdap
     }
     @Override
     public int getItemCount() {
-        return stopList.size();
+        return rpointList.size();
     }
     @Override
     public void onViewAttachedToWindow(@NonNull ViewHolder holder) {
@@ -94,14 +94,14 @@ public class StopsTimelineAdapter extends RecyclerView.Adapter<StopsTimelineAdap
 
     // ViewHolder
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvStopName;
-        ImageView stopIndicator;
+        TextView tvRPointName;
+        ImageView rpointIndicator;
         TextView tvLateness;
         Button btnArrival;
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            tvStopName = itemView.findViewById(R.id.tvStopName);
-            stopIndicator = itemView.findViewById(R.id.stopIndicator);
+            tvRPointName = itemView.findViewById(R.id.tvRPointName);
+            rpointIndicator = itemView.findViewById(R.id.rpointIndicator);
 
             tvLateness = itemView.findViewById(R.id.tvLateness);
             btnArrival = itemView.findViewById(R.id.btnArrival);
@@ -109,7 +109,7 @@ public class StopsTimelineAdapter extends RecyclerView.Adapter<StopsTimelineAdap
     }
 
     public interface OnActionButtonClickListener {
-        void onArrivalClicked(int position, boolean isLastStop);
+        void onArrivalClicked(int position, boolean isLastRPoint);
     }
     public void setOnActionButtonClickListener(OnActionButtonClickListener listener) {
         this.listener = listener;

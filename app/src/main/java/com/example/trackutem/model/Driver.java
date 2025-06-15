@@ -1,5 +1,12 @@
 package com.example.trackutem.model;
 
+import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.GeoPoint;
+
+import java.util.HashMap;
+import java.util.Map;
+
 public class Driver {
     private String driverId;
     private String name;
@@ -7,6 +14,9 @@ public class Driver {
     private String password;
     private String phone;
     private String licenseNumber;
+    private String status;
+    private GeoPoint currentLocation;
+    private Timestamp lastUpdate;
 
     // Required no-argument constructor for Firestore
     public Driver() {}
@@ -26,6 +36,9 @@ public class Driver {
     public String getPassword() { return password; }
     public String getPhone() { return phone; }
     public String getLicenseNumber() { return licenseNumber; }
+    public String getStatus() { return status; }
+    public GeoPoint getCurrentLocation() { return currentLocation; }
+    public Timestamp getLastUpdate() { return lastUpdate; }
 
     // Setters
     public void setDriverId(String driverId) { this.driverId = driverId; }
@@ -34,4 +47,17 @@ public class Driver {
     public void setPassword(String password) { this.password = password; }
     public void setPhone(String phone) { this.phone = phone; }
     public void setLicenseNumber(String licenseNumber) { this.licenseNumber = licenseNumber; }
+    public void setStatus(String status) { this.status = status; }
+    public void setCurrentLocation(GeoPoint currentLocation) { this.currentLocation = currentLocation; }
+    public void setLastUpdate(Timestamp lastUpdate) { this.lastUpdate = lastUpdate; }
+
+    public void updateDriverStatus(String driverId, String newStatus) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("status", newStatus);
+        db.collection("drivers").document(driverId)
+                .update(updates)
+                .addOnSuccessListener(aVoid -> System.out.println("Driver status updated to: " + newStatus))
+                .addOnFailureListener(e -> System.err.println("Error updating driver status: " + e.getMessage()));
+    }
 }

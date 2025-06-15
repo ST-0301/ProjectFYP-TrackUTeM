@@ -63,17 +63,17 @@ public class MapController {
                         .color(ContextCompat.getColor(context, R.color.route_color)) // Define in colors.xml
         );
     }
-    public void addRouteMarkers(List<LatLng> stops, List<String> stopNames) {
-        if (stops == null || stopNames == null || stops.size() != stopNames.size()) {
+    public void addRouteMarkers(List<LatLng> rpoints, List<String> rpointNames) {
+        if (rpoints == null || rpointNames == null || rpoints.size() != rpointNames.size()) {
             return;
         }
-        for (int i = 0; i < stops.size(); i++) {
+        for (int i = 0; i < rpoints.size(); i++) {
             Marker marker = mMap.addMarker(new MarkerOptions()
-                    .position(stops.get(i))
-                    .title(stopNames.get(i))
+                    .position(rpoints.get(i))
+                    .title(rpointNames.get(i))
                     .icon(getBusIcon()));
             if (marker != null) {
-                marker.setTag(stopNames.get(i));
+                marker.setTag(rpointNames.get(i));
             }
         }
     }
@@ -152,13 +152,13 @@ public class MapController {
     private void setupMapClickListener() {
         mMap.setOnMarkerClickListener(marker -> {
             if (marker.getTag() != null) {
-                String stopName = (String) marker.getTag();
+                String rpointName = (String) marker.getTag();
                 if (currentMarker != null) {
                     currentMarker.remove();
                 }
                 currentMarker = mMap.addMarker(new MarkerOptions()
                         .position(marker.getPosition())
-                        .title("Selected: " + stopName)
+                        .title("Selected: " + rpointName)
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
                         .zIndex(1.0f));
 //                currentMarker.showInfoWindow();

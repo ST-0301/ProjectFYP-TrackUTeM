@@ -2,7 +2,7 @@
 package com.example.trackutem.controller;
 
 import com.example.trackutem.model.Schedule;
-import com.example.trackutem.model.Schedule.StopDetail;
+import com.example.trackutem.model.Schedule.RPointDetail;
 import java.util.Calendar;
 
 public class ScheduleController {
@@ -31,32 +31,48 @@ public class ScheduleController {
             return 0;
         }
     }
-    public static void recordArrivalAndNextDeparture(Schedule schedule, int stopIndex) {
-        if (stopIndex < 0 || stopIndex >= schedule.getStops().size()) return;
 
-        // Record current stop arrival
-        StopDetail currentStop = schedule.getStops().get(stopIndex);
+    public static void recordArrivalAndNextDeparture(Schedule schedule, int rpointIndex) {
+        if (schedule == null) return;
+
+    // If event type, only update status and tripEndTime if completed
+    if ("event".equalsIgnoreCase(schedule.getType())) {
+        // Mark as completed and set tripEndTime if last point
+        if (rpointIndex == schedule.getRPoints().size() - 1) {
+            schedule.setStatus("completed");
+            schedule.setTripEndTime(System.currentTimeMillis());
+            schedule.setCurrentRPointIndex(-1);
+            schedule.updateInFirestore();
+        }
+        return;
+    }
+
+        
+        if (rpointIndex < 0 || rpointIndex >= schedule.getRPoints().size()) return;
+
+        // Record current route point arrival
+        RPointDetail currentRPoint = schedule.getRPoints().get(rpointIndex);
         long arrivalTime = System.currentTimeMillis();
-        currentStop.setActualArrivalTime(arrivalTime);
-        currentStop.setStatus("arrived");
+        currentRPoint.setActArrTime(arrivalTime);
+        currentRPoint.setStatus("arrived");
 
         // Calculate lateness
-        int lateness = calculateLateness(currentStop.getExpectedArrivalTime(), arrivalTime, schedule.getTripStartTime());
+        int lateness = calculateLateness(currentRPoint.getExpArrTime(), arrivalTime, schedule.getTripStartTime());
         if (lateness > 0) {
-            currentStop.setLatenessMinutes(lateness);
+            currentRPoint.setLatenessMinutes(lateness);
         } else {
-            currentStop.setLatenessMinutes(0);
+            currentRPoint.setLatenessMinutes(0);
         }
 
-        // Record next stop departure if exists
-        int nextIndex = stopIndex + 1;
-        if (nextIndex < schedule.getStops().size()) {
-            StopDetail nextStop = schedule.getStops().get(nextIndex);
-            nextStop.setActualDepartureTime(System.currentTimeMillis());
-            nextStop.setStatus("departed");
-            schedule.setCurrentStopIndex(nextIndex);
+        // Record next route point departure if exists
+        int nextIndex = rpointIndex + 1;
+        if (nextIndex < schedule.getRPoints().size()) {
+            RPointDetail nextRPoint = schedule.getRPoints().get(nextIndex);
+            nextRPoint.setActDepTime(System.currentTimeMillis());
+            nextRPoint.setStatus("departed");
+            schedule.setCurrentRPointIndex(nextIndex);
         } else {
-            schedule.setCurrentStopIndex(-1);
+            schedule.setCurrentRPointIndex(-1);
             schedule.setStatus("completed");
             schedule.setTripEndTime(System.currentTimeMillis());
         }

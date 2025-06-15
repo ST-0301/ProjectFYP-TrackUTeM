@@ -108,7 +108,7 @@ public class NotificationHelper {
                 .build();
     }
 
-    public Notification sendGeofenceNotification(String stopName) {
+    public Notification sendGeofenceNotification(String rpointName) {
         Intent intent = new Intent(context, ScheduleDetailsFragment.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -116,7 +116,7 @@ public class NotificationHelper {
         return new NotificationCompat.Builder(context, CHANNEL_ID_GEOFENCE)
                 .setSmallIcon(R.drawable.ic_location)
                 .setContentTitle("Bus Stop Ahead!")
-                .setContentText("You are arriving at " + stopName + ". Tap to confirm arrival.")
+                .setContentText("You are arriving at " + rpointName + ". Tap to confirm arrival.")
                 .setContentIntent(pendingIntent)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true)

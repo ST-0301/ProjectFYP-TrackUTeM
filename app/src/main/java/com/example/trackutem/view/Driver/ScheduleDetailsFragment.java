@@ -1,5 +1,5 @@
 // ScheduleDetailsFragment.java
-package com.example.trackutem.view;
+package com.example.trackutem.view.Driver;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -49,6 +49,7 @@ import com.example.trackutem.service.DirectionsService;
 import com.example.trackutem.service.TrackingService;
 import com.example.trackutem.utils.AppStateManager;
 import com.example.trackutem.utils.NotificationHelper;
+import com.example.trackutem.view.RPointsTimelineAdapter;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -174,6 +175,7 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
 
             // Initialize status, rest log & Record start working time
             currentDriver.updateDriverStatus(driverId, "on_duty");
+            currentDriver.updateDriverCurrentSchedule(driverId, scheduleId);
             restLogController.createTodayRestLog(driverId, ref -> {});
 
             requireActivity().startService(new Intent(requireActivity(), TrackingService.class));
@@ -719,10 +721,10 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
                 mapController.initializeMapFeatures();
 
                 fetchAndDrawRoute();
-                if (!rpointLocations.isEmpty()) {
-                    mapController.addRouteMarkers(rpointLocations, rpointList);
-                    getRoutePathFromDirections(rpointLocations);
-                }
+//                if (!rpointLocations.isEmpty()) {
+//                    mapController.addRouteMarkers(rpointLocations, rpointList);
+//                    getRoutePathFromDirections(rpointLocations);
+//                }
             });
         }
     }
@@ -733,7 +735,7 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
                 rpointLocations = locations;
                 if (mapController != null && !locations.isEmpty()) {
                     mapController.addRouteMarkers(locations, rpointList);
-                    getRoutePathFromDirections(locations);
+                    mapController.drawRouteFromPoints(locations, getString(R.string.directions_api_key));
                 }
             }
             @Override
@@ -743,66 +745,66 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
         });
     }
 
-    private void getRoutePathFromDirections(List<LatLng> locations) {
-        ConnectivityManager cm = (ConnectivityManager) requireContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-        if (activeNetwork == null || !activeNetwork.isConnectedOrConnecting()) {
-            Toast.makeText(requireContext(), "No internet connection", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        if (locations.size() < 2) return;
-        if (retrofit == null) {
-            retrofit = new Retrofit.Builder()
-                    .baseUrl("https://maps.googleapis.com/maps/api/")
-                    .addConverterFactory(GsonConverterFactory.create())
-                    .build();
-            directionsService = retrofit.create(DirectionsService.class);
-        }
-        LatLng origin = locations.get(0);
-        LatLng destination = locations.get(locations.size() - 1);
-        List<LatLng> waypoints = locations.subList(1, locations.size() - 1);
-
-        String originStr = origin.latitude + "," + origin.longitude;
-        String destinationStr = destination.latitude + "," + destination.longitude;
-        String waypointsStr = null;
-        if (!waypoints.isEmpty()) {
-            StringBuilder sb = new StringBuilder("optimize:true|");
-            for (LatLng point : waypoints) {
-                sb.append(point.latitude)
-                        .append(",")
-                        .append(point.longitude)
-                        .append("|");
-            }
-            waypointsStr = sb.substring(0, sb.length() - 1);
-        }
-
-        String apiKey = getString(R.string.directions_api_key);
-        directionsService.getDirections(originStr, destinationStr, waypointsStr, apiKey)
-                .enqueue(new Callback<DirectionsResponse>() {
-                    @Override
-                    public void onResponse(Call<DirectionsResponse> call, Response<DirectionsResponse> response) {
-                        if (response.isSuccessful() && response.body() != null) {
-                            DirectionsResponse directionsResponse = response.body();
-                            if (directionsResponse.routes != null &&
-                                    !directionsResponse.routes.isEmpty() &&
-                                    directionsResponse.routes.get(0).overviewPolyline != null) {
-
-                                String polyline = directionsResponse.routes.get(0).overviewPolyline.points;
-                                List<LatLng> path = PolyUtil.decode(polyline);
-
-                                mapController.drawRoute(path);
-                                mapController.zoomToRoute(path);
-                            }
-                        } else {
-                            Toast.makeText(requireContext(), "Directions API error", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                    @Override
-                    public void onFailure(Call<DirectionsResponse> call, Throwable t) {
-                        Toast.makeText(requireContext(), "Directions request failed: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-                    }
-                });
-    }
+//    private void getRoutePathFromDirections(List<LatLng> locations) {
+//        ConnectivityManager cm = (ConnectivityManager) requireContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+//        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+//        if (activeNetwork == null || !activeNetwork.isConnectedOrConnecting()) {
+//            Toast.makeText(requireContext(), "No internet connection", Toast.LENGTH_SHORT).show();
+//            return;
+//        }
+//        if (locations.size() < 2) return;
+//        if (retrofit == null) {
+//            retrofit = new Retrofit.Builder()
+//                    .baseUrl("https://maps.googleapis.com/maps/api/")
+//                    .addConverterFactory(GsonConverterFactory.create())
+//                    .build();
+//            directionsService = retrofit.create(DirectionsService.class);
+//        }
+//        LatLng origin = locations.get(0);
+//        LatLng destination = locations.get(locations.size() - 1);
+//        List<LatLng> waypoints = locations.subList(1, locations.size() - 1);
+//
+//        String originStr = origin.latitude + "," + origin.longitude;
+//        String destinationStr = destination.latitude + "," + destination.longitude;
+//        String waypointsStr = null;
+//        if (!waypoints.isEmpty()) {
+//            StringBuilder sb = new StringBuilder("optimize:true|");
+//            for (LatLng point : waypoints) {
+//                sb.append(point.latitude)
+//                        .append(",")
+//                        .append(point.longitude)
+//                        .append("|");
+//            }
+//            waypointsStr = sb.substring(0, sb.length() - 1);
+//        }
+//
+//        String apiKey = getString(R.string.directions_api_key);
+//        directionsService.getDirections(originStr, destinationStr, waypointsStr, apiKey)
+//                .enqueue(new Callback<DirectionsResponse>() {
+//                    @Override
+//                    public void onResponse(Call<DirectionsResponse> call, Response<DirectionsResponse> response) {
+//                        if (response.isSuccessful() && response.body() != null) {
+//                            DirectionsResponse directionsResponse = response.body();
+//                            if (directionsResponse.routes != null &&
+//                                    !directionsResponse.routes.isEmpty() &&
+//                                    directionsResponse.routes.get(0).overviewPolyline != null) {
+//
+//                                String polyline = directionsResponse.routes.get(0).overviewPolyline.points;
+//                                List<LatLng> path = PolyUtil.decode(polyline);
+//
+//                                mapController.drawRoute(path);
+//                                mapController.zoomToRoute(path);
+//                            }
+//                        } else {
+//                            Toast.makeText(requireContext(), "Directions API error", Toast.LENGTH_SHORT).show();
+//                        }
+//                    }
+//                    @Override
+//                    public void onFailure(Call<DirectionsResponse> call, Throwable t) {
+//                        Toast.makeText(requireContext(), "Directions request failed: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+//                    }
+//                });
+//    }
     // TimerController callbacks
     @Override
     public void onTimerTick(String formattedTime) {

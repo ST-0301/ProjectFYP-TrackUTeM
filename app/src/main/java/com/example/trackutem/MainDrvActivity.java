@@ -5,14 +5,12 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
-import com.example.trackutem.databinding.ActivityMaindrvBinding;
-import com.example.trackutem.view.HomeDrvFragment;
+import com.example.trackutem.databinding.ActivityMainDrvBinding;
 import com.example.trackutem.view.NotificationsFragment;
 import com.example.trackutem.view.SettingsFragment;
-import com.example.trackutem.view.ScheduleFragment;
+import com.example.trackutem.view.Driver.ScheduleFragment;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.tabs.TabLayout;
@@ -25,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainDrvActivity extends AppCompatActivity {
-    private ActivityMaindrvBinding binding;
+    private ActivityMainDrvBinding binding;
     private MaterialToolbar toolbar;
     private TabLayout tabLayout;
     private BottomNavigationView navView;
@@ -37,7 +35,7 @@ public class MainDrvActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        binding = ActivityMaindrvBinding.inflate(getLayoutInflater());
+        binding = ActivityMainDrvBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
         toolbar = findViewById(R.id.toolbar);

@@ -12,13 +12,11 @@ import android.location.Location;
 import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.example.trackutem.controller.TrackingController;
-import com.example.trackutem.controller.TrackingController2;
 import com.example.trackutem.model.RoutePoint;
-import com.example.trackutem.view.ScheduleDetailsFragment;
+import com.example.trackutem.view.Driver.ScheduleDetailsFragment;
 import com.example.trackutem.utils.NotificationHelper;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.Geofence;
@@ -27,14 +25,12 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
-
 import java.util.List;
 import java.util.Objects;
 
 public class TrackingService extends Service {
     private static final String TAG = "TrackingService";
     private TrackingController trackingController;
-    private TrackingController2 trackingController2;
     private FusedLocationProviderClient fusedLocationClient;
     private LocationCallback locationCallback;
 
@@ -47,13 +43,9 @@ public class TrackingService extends Service {
         SharedPreferences prefs = getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
         String driverId = prefs.getString("driverId", null);
 
-        trackingController2 = new TrackingController2(driverId);
+        trackingController = new TrackingController(driverId);
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-//        trackingController = new TrackingController(
-//                FirebaseDatabase.getInstance().getReference("bus_locations").child("bus1"),
-//                LocationServices.getFusedLocationProviderClient(this),
-//                this);
         NotificationHelper notificationHelper = new NotificationHelper(this);
         startForeground(1, notificationHelper.buildForegroundTrackingNotification());
     }
@@ -64,7 +56,6 @@ public class TrackingService extends Service {
         if (intent != null && ScheduleDetailsFragment.GEOFENCE_BROADCAST_ACTION.equals(intent.getAction())) {
             handleGeofenceTransition(intent);
         } else {
-//            trackingController.startLocationUpdates();
             startLocationUpdates();
         }
         return START_STICKY;
@@ -114,7 +105,6 @@ public class TrackingService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-//        trackingController.stopLocationUpdates();
         Log.d(TAG, "Service destroyed, tracking stopped");
 
         if (locationCallback != null) {
@@ -140,7 +130,7 @@ public class TrackingService extends Service {
             public void onLocationResult(@NonNull LocationResult locationResult) {
                 for (Location location : locationResult.getLocations()) {
                     if (location != null) {
-                        trackingController2.updateLocationToFirestore(
+                        trackingController.updateLocationToFirestore(
                                 location.getLatitude(),
                                 location.getLongitude()
                         );

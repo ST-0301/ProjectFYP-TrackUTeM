@@ -5,11 +5,16 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.PropertyName;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class RoutePoint {
     private String rpointId;
     private String name;
-    private GeoPoint location;
+    private GeoPoint coordinates;
+    private String type;
 
     public RoutePoint() {}
 
@@ -21,18 +26,26 @@ public class RoutePoint {
     public String getName() { return name; }
     @PropertyName("name")
     public void setName(String name) { this.name = name; }
-    @PropertyName("location")
-    public GeoPoint getLocation() { return location; }
-    @PropertyName("location")
-    public void setLocation(GeoPoint location) { this.location = location; }
+    @PropertyName("coordinates")
+    public GeoPoint getCoordinates() { return coordinates; }
+    @PropertyName("coordinates")
+    public void setCoordinates(GeoPoint coordinates) { this.coordinates = coordinates; }
+    @PropertyName("type")
+    public String getType() { return type; }
+    @PropertyName("type")
+    public void setType(String type) { this.type = type; }
 
     // Interfaces
     public interface RPointLocationCallback {
-        void onSuccess(LatLng location);
+        void onSuccess(LatLng coordinates);
         void onError(Exception e);
     }
     public interface RPointCallback {
         void onSuccess(String rpointName);
+        void onError(Exception e);
+    }
+    public interface AllRPointsCallback {
+        void onSuccess(List<RoutePoint> rpoints);
         void onError(Exception e);
     }
 
@@ -45,8 +58,8 @@ public class RoutePoint {
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
                         RoutePoint rpoint = documentSnapshot.toObject(RoutePoint.class);
-                        if (rpoint != null && rpoint.getLocation() != null) {
-                            GeoPoint geoPoint = rpoint.getLocation();
+                        if (rpoint != null && rpoint.getCoordinates() != null) {
+                            GeoPoint geoPoint = rpoint.getCoordinates();
                             callback.onSuccess(new LatLng(geoPoint.getLatitude(), geoPoint.getLongitude()));
                         } else {
                             callback.onError(new Exception("Route Point location not found"));
@@ -73,6 +86,21 @@ public class RoutePoint {
                     } else {
                         callback.onError(new Exception("Route Point not found"));
                     }
+                })
+                .addOnFailureListener(callback::onError);
+    }
+    public static void getAllRPoints(AllRPointsCallback callback) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("routePoints")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<RoutePoint> rpoints = new ArrayList<>();
+                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                        RoutePoint rpoint = document.toObject(RoutePoint.class);
+                        rpoint.setRPointId(document.getId());
+                        rpoints.add(rpoint);
+                    }
+                    callback.onSuccess(rpoints);
                 })
                 .addOnFailureListener(callback::onError);
     }

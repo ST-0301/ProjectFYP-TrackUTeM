@@ -11,8 +11,8 @@
         <item name="android:textColorSecondary">@color/textSecondary</item>
 
         <!-- Background Colors -->
-        <item name="colorSurface">@color/backgroundLight</item>
-        <item name="colorSurfaceVariant">@color/backgroundDark</item>
+        <item name="colorSurface">@color/lightGray</item>
+        <item name="colorSurfaceVariant">@color/darkGray</item>
 
         <!-- Error Color -->
         <item name="colorError">@color/colorError</item>

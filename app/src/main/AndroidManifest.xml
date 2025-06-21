@@ -54,13 +54,16 @@
 
         <!-- Register Activity -->
         <activity
-            android:name=".view.RegisterStuActivity"
+            android:name=".view.Student.RegisterStuActivity"
             android:windowSoftInputMode="adjustResize" />
 
         <!-- Main Activities -->
         <activity
             android:name=".MainStuActivity"
             android:screenOrientation="portrait" />
+        <activity android:name=".view.Student.RouteScheduleActivity"/>
+        <activity android:name=".view.Student.GetDirectionActivity"/>
+        <activity android:name=".view.Student.ScheduleMapStuActivity"/>
 <!--        <activity-->
 <!--            android:name=".view.ScheduleDetailsFragment"-->
 <!--            android:screenOrientation="portrait" />-->

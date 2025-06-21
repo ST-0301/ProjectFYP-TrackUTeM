@@ -18,6 +18,7 @@ import com.example.trackutem.MainStuActivity;
 import com.example.trackutem.R;
 import com.example.trackutem.controller.LoginController;
 import com.example.trackutem.model.Driver;
+import com.example.trackutem.view.Student.RegisterStuActivity;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;

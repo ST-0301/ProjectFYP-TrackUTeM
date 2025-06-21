@@ -8,7 +8,7 @@
     android:layout_marginHorizontal="24dp"
     android:layout_marginTop="8dp"
     android:layout_marginBottom="16dp"
-    app:cardBackgroundColor="@color/backgroundLight"
+    app:cardBackgroundColor="@color/lightGray"
     app:cardCornerRadius="20dp"
     app:cardElevation="4dp"
     app:strokeColor="?attr/colorOutlineVariant"
@@ -52,7 +52,6 @@
             app:layout_constraintBottom_toBottomOf="@id/chipDay"
             tools:text="scheduled" />
 
-
         <!-- Time -->
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/tvTime"
@@ -92,7 +91,7 @@
                 android:textColor="?attr/colorOnSurfaceVariant"
                 android:ellipsize="end"
                 android:maxLines="1"
-                tools:text="Jalan Universiti, PJ to KL Sentral" />
+                tools:text="Satria to Induk" />
 
             <!-- Type (Incampus/Outcampus) -->
             <com.google.android.material.textview.MaterialTextView
@@ -102,29 +101,7 @@
                 android:textSize="14sp"
                 android:textColor="?attr/colorOnSurfaceVariant"
                 android:layout_marginStart="4dp"
-                tools:text="(Outcampus)" />
+                tools:text="(Incampus)" />
         </LinearLayout>
-
-<!--        &lt;!&ndash; Status Chip &ndash;&gt;-->
-<!--        <com.google.android.material.chip.Chip-->
-<!--            android:id="@+id/chipStatus"-->
-<!--            android:layout_width="wrap_content"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:clickable="false"-->
-<!--            android:focusable="false"-->
-<!--            android:textSize="11sp"-->
-<!--            app:chipEndPadding="8dp"-->
-<!--            app:chipStartPadding="8dp"-->
-<!--            app:chipMinHeight="32dp"-->
-<!--            app:chipBackgroundColor="@color/primaryBlue"-->
-<!--            app:chipCornerRadius="8dp"-->
-<!--            app:textStartPadding="0dp"-->
-<!--            app:textEndPadding="0dp"-->
-<!--            app:chipStrokeColor="@android:color/transparent"-->
-<!--            android:textColor="@android:color/white"-->
-<!--            app:layout_constraintEnd_toEndOf="parent"-->
-<!--            app:layout_constraintTop_toTopOf="@id/tvTime"-->
-<!--            app:layout_constraintBottom_toBottomOf="@id/tvTime"-->
-<!--            tools:text="scheduled" />-->
     </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>

@@ -7,7 +7,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_gravity="center_horizontal"
-    tools:context=".view.ScheduleDetailsFragment">
+    tools:context=".view.Driver.ScheduleDetailsFragment">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -84,7 +84,7 @@
                     app:cornerRadius="16dp"
                     app:icon="@drawable/ic_play"
                     app:iconGravity="textStart"
-                    app:iconSize="24dp"
+                    app:iconSize="20dp"
                     android:text="Start Route"/>
 
                 <LinearLayout
@@ -104,7 +104,7 @@
                         app:cornerRadius="16dp"
                         app:icon="@drawable/ic_pause"
                         app:iconGravity="textStart"
-                        app:iconSize="24dp"
+                        app:iconSize="20dp"
                         android:text="Take Rest"/>
 
                     <com.google.android.material.button.MaterialButton
@@ -117,7 +117,7 @@
                         app:cornerRadius="16dp"
                         app:icon="@drawable/ic_continue"
                         app:iconGravity="textStart"
-                        app:iconSize="24dp"
+                        app:iconSize="20dp"
                         android:text="Continue"/>
 
                     <com.google.android.material.button.MaterialButton
@@ -131,7 +131,7 @@
                         app:cornerRadius="16dp"
                         app:icon="@drawable/ic_stop"
                         app:iconGravity="textStart"
-                        app:iconSize="24dp"
+                        app:iconSize="20dp"
                         app:iconTint="@color/colorError"
                         app:strokeColor="@color/colorError"
                         android:text="End Route"/>

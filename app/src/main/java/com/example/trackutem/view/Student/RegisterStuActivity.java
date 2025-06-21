@@ -1,4 +1,4 @@
-package com.example.trackutem.view;
+package com.example.trackutem.view.Student;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
@@ -14,6 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import com.example.trackutem.R;
 import com.example.trackutem.controller.RegisterStuController;
+import com.example.trackutem.view.LoginActivity;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import java.util.Objects;
@@ -34,7 +35,7 @@ public class RegisterStuActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_registerstu);
+        setContentView(R.layout.activity_register_stu);
 
         ilRegisterEmail = findViewById(R.id.ilRegisterEmail);
         ilRegisterPassword = findViewById(R.id.ilRegisterPassword);

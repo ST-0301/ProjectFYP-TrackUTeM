@@ -35,19 +35,17 @@ public class ScheduleController {
     public static void recordArrivalAndNextDeparture(Schedule schedule, int rpointIndex) {
         if (schedule == null) return;
 
-    // If event type, only update status and tripEndTime if completed
-    if ("event".equalsIgnoreCase(schedule.getType())) {
-        // Mark as completed and set tripEndTime if last point
-        if (rpointIndex == schedule.getRPoints().size() - 1) {
-            schedule.setStatus("completed");
-            schedule.setTripEndTime(System.currentTimeMillis());
-            schedule.setCurrentRPointIndex(-1);
-            schedule.updateInFirestore();
+        // If event type, only update status and tripEndTime if completed
+        if ("event".equalsIgnoreCase(schedule.getType())) {
+            // Mark as completed and set tripEndTime if last point
+            if (rpointIndex == schedule.getRPoints().size() - 1) {
+                schedule.setStatus("completed");
+                schedule.setTripEndTime(System.currentTimeMillis());
+                schedule.setCurrentRPointIndex(-1);
+                schedule.updateInFirestore();
+            }
+            return;
         }
-        return;
-    }
-
-        
         if (rpointIndex < 0 || rpointIndex >= schedule.getRPoints().size()) return;
 
         // Record current route point arrival

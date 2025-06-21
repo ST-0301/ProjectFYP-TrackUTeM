@@ -1,5 +1,5 @@
 // ScheduleFragment.java
-package com.example.trackutem.view;
+package com.example.trackutem.view.Driver;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -20,16 +20,13 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.trackutem.MainDrvActivity;
 import com.example.trackutem.R;
-import com.example.trackutem.model.Route;
 import com.example.trackutem.model.Schedule;
 import com.google.android.material.tabs.TabLayout;
 import java.text.DateFormatSymbols;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class ScheduleFragment extends Fragment {
     private TabLayout tabLayout;

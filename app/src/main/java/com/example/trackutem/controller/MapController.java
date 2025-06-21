@@ -7,13 +7,20 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.os.Looper;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
+import com.example.trackutem.MainStuActivity;
 import com.example.trackutem.R;
+import com.example.trackutem.model.DirectionsResponse;
+import com.example.trackutem.model.RoutePoint;
+import com.example.trackutem.service.DirectionsService;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationCallback;
@@ -30,7 +37,16 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.firebase.firestore.GeoPoint;
+import com.google.maps.android.PolyUtil;
+
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MapController {
     private final Context context;
@@ -38,11 +54,19 @@ public class MapController {
     private final FusedLocationProviderClient fusedLocationClient;
     private Polyline currentRoutePolyline;
     private Marker currentMarker;
+    private Retrofit retrofit;
+    private DirectionsService directionsService;
 
     public MapController(Context context, GoogleMap mMap, FusedLocationProviderClient fusedLocationClient) {
         this.context = context;
         this.mMap = mMap;
         this.fusedLocationClient = fusedLocationClient;
+
+        retrofit = new Retrofit.Builder()
+                .baseUrl("https://maps.googleapis.com/maps/api/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        directionsService = retrofit.create(DirectionsService.class);
     }
 
     // Public Methods
@@ -50,7 +74,7 @@ public class MapController {
         enableUserLocation();
         setMapStyle();
         setupMapClickListener();
-//        addBusStations();
+        // addAllBusStops();
     }
     public void drawRoute(List<LatLng> path) {
         if (currentRoutePolyline != null) {
@@ -71,9 +95,36 @@ public class MapController {
             Marker marker = mMap.addMarker(new MarkerOptions()
                     .position(rpoints.get(i))
                     .title(rpointNames.get(i))
-                    .icon(getBusIcon()));
+                    .icon(getBusStopIcon()));
             if (marker != null) {
                 marker.setTag(rpointNames.get(i));
+            }
+        }
+    }
+    // Overloaded method for cases without route point names
+    public void addRouteMarkers(List<LatLng> locations) {
+        for (LatLng location : locations) {
+            mMap.addMarker(new MarkerOptions()
+                    .position(location)
+                    .title("Route Point")
+                    .icon(getBusStopIcon()));
+        }
+    }
+    
+    public void addRouteBusStopMarkers(List<RoutePoint> routePoints) {
+        for (RoutePoint rpoint : routePoints) {
+            if ("bus_stop".equals(rpoint.getType())) {
+                com.google.firebase.firestore.GeoPoint geoPoint = rpoint.getCoordinates();
+                if (geoPoint != null) {
+                    LatLng position = new LatLng(geoPoint.getLatitude(), geoPoint.getLongitude());
+                    Marker marker = mMap.addMarker(new MarkerOptions()
+                            .position(position)
+                            .title(rpoint.getName())
+                            .icon(getBusStopIcon()));
+                    if (marker != null) {
+                        marker.setTag(rpoint);
+                    }
+                }
             }
         }
     }
@@ -91,6 +142,56 @@ public class MapController {
             // Handle exception for small routes
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(path.get(0), 14f));
         }
+    }
+    public void drawRouteFromPoints(List<LatLng> points, String apiKey) {
+        if (points.size() < 2) return;
+
+        LatLng origin = points.get(0);
+        LatLng destination = points.get(points.size() - 1);
+        List<LatLng> waypoints = points.subList(1, points.size() - 1);
+
+        getRoutePathFromDirections(origin, destination, waypoints, apiKey);
+    }
+
+    private void getRoutePathFromDirections(LatLng origin, LatLng destination, List<LatLng> waypoints, String apiKey) {
+        String originStr = origin.latitude + "," + origin.longitude;
+        String destinationStr = destination.latitude + "," + destination.longitude;
+        String waypointsStr = null;
+
+        if (!waypoints.isEmpty()) {
+            StringBuilder sb = new StringBuilder("optimize:true|");
+            for (LatLng point : waypoints) {
+                sb.append(point.latitude)
+                        .append(",")
+                        .append(point.longitude)
+                        .append("|");
+            }
+            waypointsStr = sb.substring(0, sb.length() - 1);
+        }
+
+        directionsService.getDirections(originStr, destinationStr, waypointsStr, apiKey)
+                .enqueue(new Callback<DirectionsResponse>() {
+                    @Override
+                    public void onResponse(Call<DirectionsResponse> call, Response<DirectionsResponse> response) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            DirectionsResponse directionsResponse = response.body();
+                            if (directionsResponse.routes != null &&
+                                    !directionsResponse.routes.isEmpty() &&
+                                    directionsResponse.routes.get(0).overviewPolyline != null) {
+
+                                String polyline = directionsResponse.routes.get(0).overviewPolyline.points;
+                                List<LatLng> path = PolyUtil.decode(polyline);
+                                drawRoute(path);
+                                zoomToRoute(path);
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<DirectionsResponse> call, Throwable t) {
+                        Log.e("MapController", "Directions request failed", t);
+                    }
+                });
     }
 
     // Location & Map Setup
@@ -151,22 +252,30 @@ public class MapController {
     @SuppressLint("PotentialBehaviorOverride")
     private void setupMapClickListener() {
         mMap.setOnMarkerClickListener(marker -> {
-            if (marker.getTag() != null) {
-                String rpointName = (String) marker.getTag();
-                if (currentMarker != null) {
-                    currentMarker.remove();
-                }
-                currentMarker = mMap.addMarker(new MarkerOptions()
-                        .position(marker.getPosition())
-                        .title("Selected: " + rpointName)
-                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
-                        .zIndex(1.0f));
-//                currentMarker.showInfoWindow();
-                if (currentMarker != null) {
-                    currentMarker.showInfoWindow();
+            Object tag = marker.getTag();
+            if (tag != null && tag instanceof RoutePoint) {
+                RoutePoint rpoint = (RoutePoint) tag;
+                if (context instanceof MainStuActivity) {
+                    ((MainStuActivity) context).showBusStopDetails(rpoint);
                 }
                 return true;
             }
+//            if (marker.getTag() != null) {
+//                String rpointName = (String) marker.getTag();
+//                if (currentMarker != null) {
+//                    currentMarker.remove();
+//                }
+//                currentMarker = mMap.addMarker(new MarkerOptions()
+//                        .position(marker.getPosition())
+//                        .title("Selected: " + rpointName)
+//                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
+//                        .zIndex(1.0f));
+////                currentMarker.showInfoWindow();
+//                if (currentMarker != null) {
+//                    currentMarker.showInfoWindow();
+//                }
+//                return true;
+//            }
             return false;
         });
     }
@@ -192,15 +301,78 @@ public class MapController {
 //            marker.setTag(stopNames[i]);
 //        }
 //    }
-    private BitmapDescriptor getBusIcon() {
-        int height = 110;
-        int width = 80;
-        BitmapDrawable bitmapdraw = (BitmapDrawable) ContextCompat.getDrawable(context, R.drawable.bus_station_marker);
-        if (bitmapdraw == null) {
-            return BitmapDescriptorFactory.defaultMarker();
+public void addAllBusStops() {
+    RoutePoint.getAllRPoints(new RoutePoint.AllRPointsCallback() {
+        @Override
+        public void onSuccess(List<RoutePoint> rpoints) {
+            for (RoutePoint rpoint : rpoints) {
+                if ("bus_stop".equals(rpoint.getType())) {
+                    GeoPoint geoPoint = rpoint.getCoordinates();
+                    if (geoPoint != null) {
+                        LatLng position = new LatLng(geoPoint.getLatitude(), geoPoint.getLongitude());
+                        Marker marker = mMap.addMarker(new MarkerOptions()
+                                .position(position)
+                                .title(rpoint.getName())
+                                .icon(getBusStopIcon()));
+                        if (marker != null) {
+                            marker.setTag(rpoint);
+                        }
+                    }
+                }
+            }
         }
-        Bitmap b = bitmapdraw.getBitmap();
-        Bitmap smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
-        return BitmapDescriptorFactory.fromBitmap(smallMarker);
+        @Override
+        public void onError(Exception e) {
+            Log.e("MapController", "Error fetching bus stops", e);
+        }
+    });
+}
+    private BitmapDescriptor getBusStopIcon() {
+        // int height = 110;
+        // int width = 80;
+        // BitmapDrawable bitmapdraw = (BitmapDrawable) ContextCompat.getDrawable(context, R.drawable.bus_stop_marker);
+        // if (bitmapdraw == null) {
+        //     return BitmapDescriptorFactory.defaultMarker();
+        // }
+        // Bitmap b = bitmapdraw.getBitmap();
+        // Bitmap smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
+        // return BitmapDescriptorFactory.fromBitmap(smallMarker);
+
+        // return BitmapDescriptorFactory.fromResource(R.drawable.bus_stop_marker);
+        Drawable vectorDrawable = ContextCompat.getDrawable(context, R.drawable.bus_stop_marker);
+        if (vectorDrawable == null)
+            return BitmapDescriptorFactory.defaultMarker();
+        Bitmap bitmap = Bitmap.createBitmap(
+                vectorDrawable.getIntrinsicWidth(),
+                vectorDrawable.getIntrinsicHeight(),
+                Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        vectorDrawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        vectorDrawable.draw(canvas);
+        return BitmapDescriptorFactory.fromBitmap(bitmap);
+    }
+    public BitmapDescriptor getBusLocationIcon() {
+        // int height = 110;
+        // int width = 120;
+        // BitmapDrawable bitmapdraw = (BitmapDrawable) ContextCompat.getDrawable(context, R.drawable.bus_marker);
+        // if (bitmapdraw == null) {
+        //     return BitmapDescriptorFactory.defaultMarker();
+        // }
+        // Bitmap b = bitmapdraw.getBitmap();
+        // Bitmap smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
+        // return BitmapDescriptorFactory.fromBitmap(smallMarker);
+
+        // return BitmapDescriptorFactory.fromResource(R.drawable.bus_marker);
+        Drawable vectorDrawable = ContextCompat.getDrawable(context, R.drawable.bus_marker);
+        if (vectorDrawable == null)
+            return BitmapDescriptorFactory.defaultMarker();
+        Bitmap bitmap = Bitmap.createBitmap(
+                vectorDrawable.getIntrinsicWidth(),
+                vectorDrawable.getIntrinsicHeight(),
+                Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        vectorDrawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        vectorDrawable.draw(canvas);
+        return BitmapDescriptorFactory.fromBitmap(bitmap);
     }
 }

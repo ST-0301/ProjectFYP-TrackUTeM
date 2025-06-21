@@ -1,4 +1,4 @@
-package com.example.trackutem.view;
+package com.example.trackutem.view.Driver;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,23 +30,18 @@ public class ScheduleAdapter extends RecyclerView.Adapter<ScheduleAdapter.Schedu
         return new ScheduleViewHolder(view);
     }
     
-    // ...existing code...
     @Override
     public void onBindViewHolder(@NonNull ScheduleViewHolder holder, int position) {
         Schedule schedule = schedules.get(position);
 
-        // Format and display day in a modern chip
         String day = schedule.getDay();
         String chipDayText = "";
         if (day != null && !day.isEmpty()) {
-            // Capitalize day: "monday" -> "Monday"
             String formattedDay = day.substring(0, 1).toUpperCase() + day.substring(1);
 
-            // If type is "event" and date is present, append date
             String type = schedule.getType() != null ? schedule.getType() : "";
             String date = null;
             try {
-                // Use reflection to get 'date' if present (for backward compatibility)
                 java.lang.reflect.Method getDateMethod = schedule.getClass().getMethod("getDate");
                 date = (String) getDateMethod.invoke(schedule);
             } catch (Exception ignored) {
@@ -64,7 +59,6 @@ public class ScheduleAdapter extends RecyclerView.Adapter<ScheduleAdapter.Schedu
         }
         holder.tvTime.setText(schedule.getTime() != null ? schedule.getTime() : "");
 
-        // Set type text
         String type = schedule.getType() != null ? schedule.getType() : "";
         if (!type.isEmpty()) {
             type = Character.toUpperCase(type.charAt(0)) + type.substring(1);
@@ -96,7 +90,6 @@ public class ScheduleAdapter extends RecyclerView.Adapter<ScheduleAdapter.Schedu
         holder.itemView.setOnClickListener(v -> listener.onScheduleClick(schedule));
     }
 
-    // ...existing code...
     @Override
     public int getItemCount() {
         return schedules != null ? schedules.size() : 0;

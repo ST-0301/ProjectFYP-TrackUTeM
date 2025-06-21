@@ -143,10 +143,22 @@ public class Schedule {
                     callback.accept(schedule);
                 });
     }
+
     public static void getSchedulesByDriverId(String driverId, OnSchedulesRetrieved listener) {
         FirebaseFirestore.getInstance()
                 .collection("schedules")
                 .whereEqualTo("driverId", driverId)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    List<Schedule> schedules = querySnapshot.toObjects(Schedule.class);
+                    listener.onSuccess(schedules);
+                })
+                .addOnFailureListener(listener::onError);
+    }
+    
+    public static void getAllSchedules(OnSchedulesRetrieved listener) {
+        FirebaseFirestore.getInstance()
+                .collection("schedules")
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
                     List<Schedule> schedules = querySnapshot.toObjects(Schedule.class);

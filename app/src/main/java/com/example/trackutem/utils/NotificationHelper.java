@@ -13,7 +13,7 @@ import android.util.Log;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import com.example.trackutem.R;
-import com.example.trackutem.view.ScheduleDetailsFragment;
+import com.example.trackutem.view.Driver.ScheduleDetailsFragment;
 
 public class NotificationHelper {
     private static final String TAG = "NotificationHelper";

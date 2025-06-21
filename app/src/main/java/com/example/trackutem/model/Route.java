@@ -5,6 +5,8 @@ import android.util.Log;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.PropertyName;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -56,8 +58,27 @@ public class Route {
         void onRPointsLocationResolved(List<LatLng> locations);
         void onError(Exception e);
     }
+    public interface AllRoutesCallback {
+        void onSuccess(List<Route> routes);
+        void onError(Exception e);
+    }
 
     // Firebase Operations
+    public static void getAllRoutes(AllRoutesCallback callback) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("routes")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<Route> routes = new ArrayList<>();
+                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                        Route route = document.toObject(Route.class);
+                        route.setRouteId(document.getId());
+                        routes.add(route);
+                    }
+                    callback.onSuccess(routes);
+                })
+                .addOnFailureListener(callback::onError);
+    }
     public static void resolveRouteName(String routeId, Route.RouteNameCallback callback) {
         FirebaseFirestore.getInstance().collection("routes").document(routeId)
                 .get()

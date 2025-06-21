@@ -1,0 +1,83 @@
+<!-- bus_marker.xml -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="54dp"
+    android:height="54dp"
+    android:viewportWidth="54"
+    android:viewportHeight="54">
+
+    <!-- Shadow/Elevation -->
+    <path
+        android:fillColor="#33000000"
+        android:pathData="M17,45 a10,2.5 0 1,0 20,0 a10,2.5 0 1,0 -20,0"/>
+<!--    <path-->
+<!--        android:fillColor="#33000000"-->
+<!--        android:pathData="M10,44 a17,4 0 1,0 34,0 a17,4 0 1,0 -34,0"/>-->
+
+    <!-- Bus body -->
+    <path
+        android:fillColor="#1976D2"
+        android:strokeColor="#000000"
+        android:strokeWidth="1"
+        android:strokeLineJoin="round"
+        android:pathData="M3,22 C3,16 7,12 18,12 H40 C50,12 50,16 50,22 V34 C50,40 50,40 30,40 H18 C7,40 3,40 3,34 V22 Z"/>
+
+    <!-- Windows -->
+    <path
+        android:fillColor="#BBDEFB"
+        android:strokeColor="#000000"
+        android:strokeWidth="0.5"
+        android:pathData="M5,29 V20 Q5,17 7,16 H15 V29 Z"/>
+    <path
+        android:fillColor="#BBDEFB"
+        android:strokeColor="#000000"
+        android:strokeWidth="0.5"
+        android:pathData="M17,16 H23.5 V26 H17 Z"/>
+    <path
+        android:fillColor="#BBDEFB"
+        android:strokeColor="#000000"
+        android:strokeWidth="0.5"
+        android:pathData="M25,16 H31.5 V26 H25 Z"/>
+    <path
+        android:fillColor="#BBDEFB"
+        android:strokeColor="#000000"
+        android:strokeWidth="0.5"
+        android:pathData="M33,16 H39.5 V26 H33 Z"/>
+    <path
+        android:fillColor="#BBDEFB"
+        android:strokeColor="#000000"
+        android:strokeWidth="0.5"
+        android:pathData="M41,16 H47.5 V26 H41 Z"/>
+
+    <!-- Headlight -->
+    <path
+        android:fillColor="#E0E0E0"
+        android:strokeColor="#000000"
+        android:strokeWidth="0.5"
+        android:pathData="M5,34 a1,1 0 1,0 3,0 a1,1 0 1,0 -3,0"/>
+
+    <!-- Bus doors -->
+    <path
+        android:fillColor="#64B5F6"
+        android:strokeColor="#000000"
+        android:strokeWidth="0.5"
+        android:pathData="M20,32 H27.5 V39.5 H20 Z"/>
+    <path
+        android:fillColor="#64B5F6"
+        android:strokeColor="#000000"
+        android:strokeWidth="0.5"
+        android:pathData="M27.5,32 H35 V39.5 H27.5 Z"/>
+
+    <!-- Left wheel -->
+    <path
+        android:fillColor="#E0E0E0"
+        android:strokeColor="#000000"
+        android:strokeWidth="1"
+        android:pathData="M11,40 a1,1 0 1,0 6,0 a1,1 0 1,0 -6,0"/>
+
+    <!-- Right wheel -->
+    <path
+        android:fillColor="#E0E0E0"
+        android:strokeColor="#000000"
+        android:strokeWidth="1"
+        android:pathData="M38,40 a1,1 0 1,0 6,0 a1,1 0 1,0 -6,0"/>
+  </vector>

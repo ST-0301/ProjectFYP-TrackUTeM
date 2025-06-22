@@ -3,6 +3,7 @@ package com.example.trackutem.controller;
 import android.os.Looper;
 import com.example.trackutem.model.DatabaseHelper;
 import com.example.trackutem.model.Driver;
+import com.example.trackutem.model.Student;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
@@ -20,11 +21,28 @@ public class LoginController {
     }
 
     // Student login with email and password
-    public void loginUser(String email, String password, StudentLoginCallback callback) {
+    public void loginStudent(String email, String password, StudentLoginCallback callback) {
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        handleStudentSuccessfulLogin(callback);
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        if (user != null && user.isEmailVerified()) {
+//                            callback.onStudentLoginSuccess(user.getEmail());
+                            databaseHelper.getStudentByEmail(email, new DatabaseHelper.OnStudentFetchedListener() {
+                                @Override
+                                public void onStudentFetched(Student student) {
+                                    callback.onStudentLoginSuccess(student);
+                                }
+                                @Override
+                                public void onStudentFetchFailed(String errorMessage) {
+                                    mAuth.signOut();
+                                    callback.onStudentLoginFailure(errorMessage);
+                                }
+                            });
+                        } else {
+                            mAuth.signOut();
+                            callback.onStudentLoginFailure(user == null ? "Student not found" : "Email not verified");
+                        }
                     } else {
                         handleStudentLoginError(task, callback);
                     }
@@ -66,14 +84,6 @@ public class LoginController {
             }
         });
     }
-    private void handleStudentSuccessfulLogin(StudentLoginCallback callback) {
-        FirebaseUser user = mAuth.getCurrentUser();
-        if (user != null && user.isEmailVerified()) {
-            callback.onStudentLoginSuccess(user.getEmail());
-        } else {
-            mAuth.signOut();
-            callback.onStudentLoginFailure(user == null ? "User not found" : "Email not verified");        }
-    }
     private void handleStudentLoginError(Task<AuthResult> task, StudentLoginCallback callback) {
         String errorMessage = "Login failed. Please try again";
         if (task.getException() instanceof FirebaseAuthException) {
@@ -111,7 +121,7 @@ public class LoginController {
     }
 
     public interface StudentLoginCallback {
-        void onStudentLoginSuccess(String email);
+        void onStudentLoginSuccess(Student student);
         void onStudentLoginFailure(String errorMessage);
     }
     public interface ResetPasswordCallback {

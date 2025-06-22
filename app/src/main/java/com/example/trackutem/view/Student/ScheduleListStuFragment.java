@@ -49,7 +49,7 @@ public class ScheduleListStuFragment extends Fragment {
             tvEmpty.setVisibility(View.GONE);
             recyclerView.setVisibility(View.VISIBLE);
             recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-            ScheduleStuAdapter adapter = new ScheduleStuAdapter(requireContext(), schedules);
+            ScheduleStuAdapter adapter = new ScheduleStuAdapter(requireContext(), schedules, null);
             recyclerView.setAdapter(adapter);
         }
         return view;

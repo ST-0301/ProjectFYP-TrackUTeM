@@ -11,8 +11,6 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
@@ -40,7 +38,6 @@ import com.example.trackutem.controller.MapController;
 import com.example.trackutem.controller.RestLogController;
 import com.example.trackutem.controller.ScheduleController;
 import com.example.trackutem.controller.TimerController;
-import com.example.trackutem.model.DirectionsResponse;
 import com.example.trackutem.model.Driver;
 import com.example.trackutem.model.Route;
 import com.example.trackutem.model.RoutePoint;
@@ -49,7 +46,6 @@ import com.example.trackutem.service.DirectionsService;
 import com.example.trackutem.service.TrackingService;
 import com.example.trackutem.utils.AppStateManager;
 import com.example.trackutem.utils.NotificationHelper;
-import com.example.trackutem.view.RPointsTimelineAdapter;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -69,17 +65,14 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.maps.android.PolyUtil;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
+
 import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ScheduleDetailsFragment extends Fragment implements TimerController.TimerCallback {
     private static final long REST_DURATION_MILLIS = 2 * 60 * 1000;

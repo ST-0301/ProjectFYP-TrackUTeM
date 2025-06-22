@@ -12,17 +12,18 @@ import com.example.trackutem.R;
 import com.example.trackutem.model.Route;
 import com.example.trackutem.model.Schedule;
 import com.google.android.material.chip.Chip;
-
 import java.lang.ref.WeakReference;
 import java.util.List;
 
 public class ScheduleStuAdapter extends RecyclerView.Adapter<ScheduleStuAdapter.ViewHolder> {
     private List<Schedule> schedules;
     private WeakReference<Context> contextRef;
+    private String fromRPointId;
 
-    public ScheduleStuAdapter(Context context, List<Schedule> schedules) {
+    public ScheduleStuAdapter(Context context, List<Schedule> schedules, String fromRPointId) {
         this.contextRef = new WeakReference<>(context);
         this.schedules = schedules;
+        this.fromRPointId = fromRPointId;
     }
 
     @NonNull
@@ -36,7 +37,19 @@ public class ScheduleStuAdapter extends RecyclerView.Adapter<ScheduleStuAdapter.
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Schedule schedule = schedules.get(position);
-        holder.tvTime.setText(schedule.getTime());
+
+        // Find expDepTime for the selected fromRPointId
+        String expDepTime = null;
+        if (fromRPointId != null && schedule.getRPoints() != null) {
+            for (Schedule.RPointDetail rpd : schedule.getRPoints()) {
+                if (fromRPointId.equals(rpd.getRPointId())) {
+                    expDepTime = rpd.getExpDepTime();
+                    break;
+                }
+            }
+        }
+        holder.tvTime.setText(expDepTime != null && !expDepTime.isEmpty() ? expDepTime : schedule.getTime());
+        // holder.tvTime.setText(schedule.getTime());
 
         holder.chipStatus.setText(schedule.getStatus().toUpperCase());
         int statusColor = getStatusColor(schedule.getStatus());
@@ -71,6 +84,9 @@ public class ScheduleStuAdapter extends RecyclerView.Adapter<ScheduleStuAdapter.
                 intent.putExtra("scheduleId", schedule.getScheduleId());
                 intent.putExtra("driverId", schedule.getDriverId());
                 intent.putExtra("busId", schedule.getBusId());
+                if (fromRPointId != null) {
+                    intent.putExtra("fromRPointId", fromRPointId);
+                }
                 context.startActivity(intent);
             }
         });

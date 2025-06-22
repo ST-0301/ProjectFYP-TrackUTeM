@@ -9,9 +9,6 @@
     <path
         android:fillColor="#33000000"
         android:pathData="M17,45 a10,2.5 0 1,0 20,0 a10,2.5 0 1,0 -20,0"/>
-<!--    <path-->
-<!--        android:fillColor="#33000000"-->
-<!--        android:pathData="M10,44 a17,4 0 1,0 34,0 a17,4 0 1,0 -34,0"/>-->
 
     <!-- Bus body -->
     <path

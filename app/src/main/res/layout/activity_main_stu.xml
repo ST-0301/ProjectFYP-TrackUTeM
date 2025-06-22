@@ -14,8 +14,7 @@
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".MainStuActivity"
-        app:layout_constraintTop_toBottomOf="@id/appBarLayout"/>
+        tools:context=".MainStuActivity"/>
         
     <!-- Top Centered Search Bar -->
     <FrameLayout
@@ -23,8 +22,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="top"
         android:paddingTop="32dp"
-        android:paddingLeft="24dp"
-        android:paddingRight="24dp">
+        android:paddingHorizontal="24dp">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnWhereToGo"
@@ -56,9 +54,8 @@
             android:layout_height="match_parent"
             android:background="@android:color/white"
             android:orientation="vertical"
-            android:paddingLeft="16dp"
-            android:paddingTop="12dp"
-            android:paddingRight="16dp">
+            android:paddingHorizontal="16dp"
+            android:paddingTop="12dp">
 
             <!-- Handle -->
             <View
@@ -83,6 +80,7 @@
 
             <!-- Routes Title -->
             <TextView
+                android:id="@+id/tvRoutesTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Available routes:"
@@ -99,6 +97,17 @@
                 android:padding="4dp"
                 android:clipToPadding="false"
                 android:contentDescription="List of routes passing through this stop"/>
+
+            <TextView
+                android:id="@+id/tvEmpty"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="No routes found for this stop"
+                android:textSize="16sp"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:visibility="gone" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

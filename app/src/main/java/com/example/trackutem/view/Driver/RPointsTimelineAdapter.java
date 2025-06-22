@@ -1,5 +1,5 @@
 // RPointsTimelineAdapter.java
-package com.example.trackutem.view;
+package com.example.trackutem.view.Driver;
 
 import android.content.Context;
 import android.view.LayoutInflater;

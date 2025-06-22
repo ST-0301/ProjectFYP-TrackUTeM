@@ -18,6 +18,7 @@ import com.example.trackutem.MainStuActivity;
 import com.example.trackutem.R;
 import com.example.trackutem.controller.LoginController;
 import com.example.trackutem.model.Driver;
+import com.example.trackutem.model.Student;
 import com.example.trackutem.view.Student.RegisterStuActivity;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
@@ -87,7 +88,7 @@ public class LoginActivity extends AppCompatActivity {
                 loginController.loginDriver(email, password, new LoginController.DriverLoginCallback() {
                     @Override
                     public void onDriverLoginSuccess(Driver driver) {
-                        handleSuccessfulLogin(driver.getEmail(), driver);
+                        handleSuccessfulLogin(driver.getEmail(), driver, null);
                     }
                     @Override
                     public void onDriverLoginFailure(String errorMessage) {
@@ -95,17 +96,11 @@ public class LoginActivity extends AppCompatActivity {
                     }
                 });
             } else {
-                loginController.loginUser(email, password, new LoginController.StudentLoginCallback() {
+                loginController.loginStudent(email, password, new LoginController.StudentLoginCallback() {
                     @Override
-                    public void onStudentLoginSuccess(String email) {
-                        // Email verification check
-                        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-                        if (user != null && user.isEmailVerified()) {
-                            handleSuccessfulLogin(email, null);
-                        } else {
-                            Toast.makeText(LoginActivity.this, "Please verify your email first", Toast.LENGTH_SHORT).show();
-                            FirebaseAuth.getInstance().signOut();
-                        }
+                    public void onStudentLoginSuccess(Student student) {
+                        Toast.makeText(LoginActivity.this, "Login Successful", Toast.LENGTH_SHORT).show();
+                        handleSuccessfulLogin(student.getEmail(), null, student);
                     }
                     @Override
                     public void onStudentLoginFailure(String errorMessage) {
@@ -147,7 +142,7 @@ public class LoginActivity extends AppCompatActivity {
         return email.endsWith("@student.utem.edu.my") || email.endsWith("@utem.edu.my");
     }
 
-    private void handleSuccessfulLogin(String email, @Nullable Driver driver) {
+    private void handleSuccessfulLogin(String email, @Nullable Driver driver, @Nullable Student student) {
         Toast.makeText(LoginActivity.this, "Login Successful", Toast.LENGTH_SHORT).show();
 
         // Save login state if "Remember Me" is checked
@@ -161,6 +156,8 @@ public class LoginActivity extends AppCompatActivity {
         // Only add driverId if it's a driver login
         if (driver != null) {
             editor.putString("driverId", driver.getDriverId());
+        } else if (student != null) {
+            editor.putString("studentId", student.getStudentId());
         }
         editor.apply();
 

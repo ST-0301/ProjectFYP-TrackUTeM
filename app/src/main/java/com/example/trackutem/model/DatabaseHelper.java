@@ -14,8 +14,8 @@ public class DatabaseHelper {
         db = FirebaseFirestore.getInstance();
     }
 
-    public void saveStudentData(String studentId, String name, String email, String role) {
-        Student student = new Student(studentId, name, email, role);
+    public void saveStudentData(String studentId, String name, String email) {
+        Student student = new Student(studentId, name, email);
 
         CollectionReference studentRef = db.collection("students");
         studentRef.document(studentId).set(student)
@@ -37,7 +37,24 @@ public class DatabaseHelper {
                     }
                 });
     }
+    public void getStudentByEmail(String email, OnStudentFetchedListener listener) {
+        db.collection("students")
+                .whereEqualTo("email", email.toLowerCase())
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!queryDocumentSnapshots.isEmpty()) {
+                        DocumentSnapshot document = queryDocumentSnapshots.getDocuments().get(0);
 
+                        Student student = document.toObject(Student.class);
+                        if (student != null) {
+                            listener.onStudentFetched(student);
+                        } else {
+                            listener.onStudentFetchFailed("Student not found");
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> listener.onStudentFetchFailed("Error fetching student: " + e.getMessage()));
+    }
     public void getDriverByEmail(String email, onDriverFetchedListener listener) {
         db.collection("drivers")
                 .whereEqualTo("email", email.toLowerCase())
@@ -59,6 +76,10 @@ public class DatabaseHelper {
 
     public interface onEmailCheckedListener {
         void onEmailChecked(boolean isAvailable);
+    }
+    public interface OnStudentFetchedListener {
+        void onStudentFetched(Student student);
+        void onStudentFetchFailed(String errorMessage);
     }
     public interface onDriverFetchedListener {
         void onDriverFetched(Driver driver);

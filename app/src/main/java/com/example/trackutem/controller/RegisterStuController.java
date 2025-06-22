@@ -40,7 +40,7 @@ public class RegisterStuController {
                                     .addOnCompleteListener(emailTask -> {
                                        if (emailTask.isSuccessful()) {
                                            // Save student data
-                                           dbHelper.saveStudentData(user.getUid(), name, email, "student");
+                                           dbHelper.saveStudentData(user.getUid(), name, email);
                                            callback.onSuccess();
                                        }
                                     });

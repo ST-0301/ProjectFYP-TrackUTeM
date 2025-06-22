@@ -1,7 +1,10 @@
 package com.example.trackutem.model;
 
 import com.google.firebase.database.PropertyName;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
@@ -35,6 +38,7 @@ public class Schedule {
         private Long actDepTime;
         private int latenessMinutes;
         private String status; // "scheduled", "departed", "arrived"
+        private List<String> queuelist;
 
         public RPointDetail() {}
 
@@ -66,6 +70,10 @@ public class Schedule {
         public String getStatus() { return status; }
         @PropertyName("status")
         public void setStatus(String status) { this.status = status; }
+        @PropertyName("queuelist")
+        public List<String> getQueuelist() { return queuelist; }
+        @PropertyName("queuelist")
+        public void setQueuelist(List<String> queuelist) { this.queuelist = queuelist; }
     }
     @PropertyName("scheduleId")
     public String getScheduleId() { return scheduleId; }
@@ -143,7 +151,6 @@ public class Schedule {
                     callback.accept(schedule);
                 });
     }
-
     public static void getSchedulesByDriverId(String driverId, OnSchedulesRetrieved listener) {
         FirebaseFirestore.getInstance()
                 .collection("schedules")
@@ -155,7 +162,6 @@ public class Schedule {
                 })
                 .addOnFailureListener(listener::onError);
     }
-    
     public static void getAllSchedules(OnSchedulesRetrieved listener) {
         FirebaseFirestore.getInstance()
                 .collection("schedules")
@@ -165,5 +171,68 @@ public class Schedule {
                     listener.onSuccess(schedules);
                 })
                 .addOnFailureListener(listener::onError);
+    }
+    public void addStuToQueue(String rpointId, String studentId) {
+        FirebaseFirestore.getInstance()
+                .collection("schedules")
+                .document(this.scheduleId) // Use this.scheduleId
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    Schedule schedule = documentSnapshot.toObject(Schedule.class);
+                    if (schedule != null && schedule.getRPoints() != null) {
+                        for (RPointDetail rPointDetail : schedule.getRPoints()) {
+                            if (rPointDetail.getRPointId().equals(rpointId)) {
+                                if (rPointDetail.getQueuelist() == null) {
+                                    rPointDetail.setQueuelist(new ArrayList<>());
+                                }
+                                if (!rPointDetail.getQueuelist().contains(studentId)) {
+                                    rPointDetail.getQueuelist().add(studentId);
+                                    // Update the entire schedule document
+                                    FirebaseFirestore.getInstance().collection("schedules").document(this.scheduleId)
+                                            .set(schedule)
+                                            .addOnSuccessListener(aVoid -> System.out.println("Student added to queue successfully!"))
+                                            .addOnFailureListener(e -> System.err.println("Error adding student to queue: " + e.getMessage()));
+                                } else {
+                                    System.out.println("Student already in queue for this rpoint.");
+                                }
+                                return;
+                            }
+                        }
+                        System.err.println("Error: RPoint with ID " + rpointId + " not found in schedule.");
+                    } else {
+                        System.err.println("Error: Schedule or rpoints list is null.");
+                    }
+                })
+                .addOnFailureListener(e -> System.err.println("Error fetching schedule for adding student to queue: " + e.getMessage()));
+    }
+    public void removeStuFromQueue(String rpointId, String studentId) {
+        FirebaseFirestore.getInstance()
+                .collection("schedules")
+                .document(this.scheduleId) // Use this.scheduleId
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    Schedule schedule = documentSnapshot.toObject(Schedule.class);
+                    if (schedule != null && schedule.getRPoints() != null) {
+                        for (RPointDetail rPointDetail : schedule.getRPoints()) {
+                            if (rPointDetail.getRPointId().equals(rpointId)) {
+                                if (rPointDetail.getQueuelist() != null && rPointDetail.getQueuelist().contains(studentId)) {
+                                    rPointDetail.getQueuelist().remove(studentId);
+                                    // Update the entire schedule document
+                                    FirebaseFirestore.getInstance().collection("schedules").document(this.scheduleId)
+                                            .set(schedule)
+                                            .addOnSuccessListener(aVoid -> System.out.println("Student removed from queue successfully!"))
+                                            .addOnFailureListener(e -> System.err.println("Error removing student from queue: " + e.getMessage()));
+                                } else {
+                                    System.out.println("Student not found in queue for this rpoint.");
+                                }
+                                return;
+                            }
+                        }
+                        System.err.println("Error: RPoint with ID " + rpointId + " not found in schedule.");
+                    } else {
+                        System.err.println("Error: Schedule or rpoints list is null.");
+                    }
+                })
+                .addOnFailureListener(e -> System.err.println("Error fetching schedule for removing student from queue: " + e.getMessage()));
     }
 }

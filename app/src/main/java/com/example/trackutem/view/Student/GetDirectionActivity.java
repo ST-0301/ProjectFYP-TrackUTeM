@@ -1,10 +1,13 @@
 package com.example.trackutem.view.Student;
 
+import android.animation.ObjectAnimator;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.Nullable;
@@ -30,11 +33,13 @@ import java.util.Map;
 
 public class GetDirectionActivity extends AppCompatActivity {
     private AutoCompleteTextView dropdownFrom, dropdownTo;
+    private ImageButton btnReverse;
     private RecyclerView rvSchedules;
     private List<RoutePoint> busStops = new ArrayList<>();
     private Map<String, RoutePoint> nameToRoutePoint = new HashMap<>();
     private List<Schedule> matchingSchedules = new ArrayList<>();
     private TextView tvEmpty;
+    private String selectedFromRPointId = null;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -50,10 +55,26 @@ public class GetDirectionActivity extends AppCompatActivity {
 
         dropdownFrom = findViewById(R.id.dropdownFrom);
         dropdownTo = findViewById(R.id.dropdownTo);
+        btnReverse = findViewById(R.id.btnReverse);
         rvSchedules = findViewById(R.id.rvSchedules);
         tvEmpty = findViewById(R.id.tvEmpty);
         tvEmpty.setVisibility(View.GONE);
 
+        btnReverse.setOnClickListener(v -> {
+            String from = dropdownFrom.getText().toString();
+            String to = dropdownTo.getText().toString();
+            if (!from.isEmpty() || !to.isEmpty()) {
+
+                dropdownFrom.setText(to, false);
+                dropdownTo.setText(from, false);
+                tryShowSchedules();
+                // Play animation
+                ObjectAnimator rotateAnim = ObjectAnimator.ofFloat(btnReverse, "rotation", 0f, 360f);
+                rotateAnim.setDuration(400);
+                rotateAnim.setInterpolator(new AccelerateDecelerateInterpolator());
+                rotateAnim.start();
+            }
+        });
         fetchBusStops();
         setupTabs();
     }
@@ -124,6 +145,7 @@ public class GetDirectionActivity extends AppCompatActivity {
             RoutePoint fromPoint = nameToRoutePoint.get(fromName);
             RoutePoint toPoint = nameToRoutePoint.get(toName);
             if (fromPoint != null && toPoint != null) {
+                selectedFromRPointId = fromPoint.getRPointId();
                 findViewById(R.id.tabLayout).setVisibility(View.VISIBLE);
                 findViewById(R.id.viewPager).setVisibility(View.VISIBLE);
                 findViewById(R.id.rvSchedules).setVisibility(View.VISIBLE);
@@ -139,12 +161,29 @@ public class GetDirectionActivity extends AppCompatActivity {
                 matchingSchedules.clear();
                 for (Schedule schedule : schedules) {
                     List<Schedule.RPointDetail> rpoints = schedule.getRPoints();
+                    // if (rpoints != null) {
+                    //     List<String> rpointIds = new ArrayList<>();
+                    //     for (Schedule.RPointDetail rpd : rpoints) {
+                    //         rpointIds.add(rpd.getRPointId());
+                    //     }
+                    //     if (rpointIds.contains(fromRPointId) && rpointIds.contains(toRPointId)) {
+                    //         matchingSchedules.add(schedule);
+                    //     }
+                    // }
                     if (rpoints != null) {
-                        List<String> rpointIds = new ArrayList<>();
-                        for (Schedule.RPointDetail rpd : rpoints) {
-                            rpointIds.add(rpd.getRPointId());
+                        int fromIndex = -1;
+                        int toIndex = -1;
+                        for (int i = 0; i < rpoints.size(); i++) {
+                            String rpointId = rpoints.get(i).getRPointId();
+                            if (rpointId.equals(fromRPointId) && fromIndex == -1) {
+                                fromIndex = i;
+                            }
+                            if (rpointId.equals(toRPointId) && fromIndex != -1 && toIndex == -1) {
+                                toIndex = i;
+                                break; // found both in order
+                            }
                         }
-                        if (rpointIds.contains(fromRPointId) && rpointIds.contains(toRPointId)) {
+                        if (fromIndex != -1 && toIndex != -1 && fromIndex < toIndex) {
                             matchingSchedules.add(schedule);
                         }
                     }
@@ -168,12 +207,11 @@ public class GetDirectionActivity extends AppCompatActivity {
         if (schedules.isEmpty()) {
             rv.setVisibility(View.GONE);
             tvEmpty.setVisibility(View.VISIBLE);
-            tvEmpty.setText("No trips available");
         } else {
             rv.setVisibility(View.VISIBLE);
             tvEmpty.setVisibility(View.GONE);
             rv.setLayoutManager(new LinearLayoutManager(this));
-            ScheduleStuAdapter adapter = new ScheduleStuAdapter(this, schedules);
+            ScheduleStuAdapter adapter = new ScheduleStuAdapter(this, schedules, selectedFromRPointId);
             rv.setAdapter(adapter);
         }
     }
@@ -248,7 +286,6 @@ public class GetDirectionActivity extends AppCompatActivity {
         if (filtered.isEmpty()) {
             rvSchedules.setVisibility(View.GONE);
             tvEmpty.setVisibility(View.VISIBLE);
-            tvEmpty.setText("No trips available");
         } else {
             showSchedules(filtered);
         }

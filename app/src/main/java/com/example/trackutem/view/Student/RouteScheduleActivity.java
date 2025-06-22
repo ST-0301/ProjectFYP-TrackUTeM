@@ -31,7 +31,7 @@ public class RouteScheduleActivity extends AppCompatActivity {
 
         RecyclerView rvSchedules = findViewById(R.id.rvSchedules);
         rvSchedules.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new ScheduleStuAdapter(this, new ArrayList<>());
+        adapter = new ScheduleStuAdapter(this, new ArrayList<>(), null);
         rvSchedules.setAdapter(adapter);
 
         String routeId = getIntent().getStringExtra(EXTRA_ROUTE_ID);

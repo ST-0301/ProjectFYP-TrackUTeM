@@ -37,7 +37,8 @@ public class MainStuActivity extends AppCompatActivity {
     private MaterialCardView searchCard;
     private MaterialButton btnWhereToGo;
     private MaterialCardView bottomSheet;
-    private TextView tvStopName;
+    private BottomSheetBehavior<View> behavior;
+    private TextView tvStopName, tvRoutesTitle, tvEmpty;
     private RecyclerView rvRoutes;
     private RouteAdapter routeAdapter;
 
@@ -55,10 +56,10 @@ public class MainStuActivity extends AppCompatActivity {
         });
 
         bottomSheet = findViewById(R.id.bottomSheetCard);
-        BottomSheetBehavior<View> behavior = BottomSheetBehavior.from(bottomSheet);
+        behavior = BottomSheetBehavior.from(bottomSheet);
         DisplayMetrics metrics = getResources().getDisplayMetrics();
-        int peekHeight = (int) (metrics.heightPixels * 0.25); // 15% of screen
-        int halfHeight = (int) (metrics.heightPixels * 0.55); // 55% of screen
+        int peekHeight = (int) (metrics.heightPixels * 0.25); // 25% of screen
+//        int halfHeight = (int) (metrics.heightPixels * 0.55); // 55% of screen
         behavior.setPeekHeight(peekHeight, true);
         behavior.setHideable(true);
         behavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
@@ -73,12 +74,13 @@ public class MainStuActivity extends AppCompatActivity {
         });
 
         tvStopName = bottomSheet.findViewById(R.id.tvStopName);
+        tvRoutesTitle = findViewById(R.id.tvRoutesTitle);
         rvRoutes = bottomSheet.findViewById(R.id.rvRoutes);
+        tvEmpty = bottomSheet.findViewById(R.id.tvEmpty);
 
         // Setup RecyclerView
         rvRoutes.setLayoutManager(new LinearLayoutManager(this));
         routeAdapter = new RouteAdapter(new ArrayList<>(), route -> {
-            // Open schedule activity for this route
             Intent intent = new Intent(this, RouteScheduleActivity.class);
             intent.putExtra(RouteScheduleActivity.EXTRA_ROUTE_ID, route.getRouteId());
             startActivity(intent);
@@ -121,32 +123,26 @@ public class MainStuActivity extends AppCompatActivity {
                     View locationButton = mapView.findViewWithTag("GoogleMapMyLocationButton");
                     if (locationButton == null) {
                         try {
-                            locationButton = ((View) mapView.findViewById(Integer.parseInt("1")))
-                                    .findViewById(Integer.parseInt("2"));
+                            locationButton = ((View) mapView.findViewById(Integer.parseInt("1"))).findViewById(Integer.parseInt("2"));
                         } catch (Exception ignored) {
                         }
                     }
                     if (locationButton != null) {
-                        int topMarginPx = (int) (getResources().getDisplayMetrics().density * 100); // e.g. 100dp below
+                        int topMarginPx = (int) (getResources().getDisplayMetrics().density * 100);
                         View btnWhereToGo = findViewById(R.id.btnWhereToGo);
                         if (btnWhereToGo != null) {
-                            final View finalLocationButton = locationButton; // make final for lambda
+                            final View finalLocationButton = locationButton;
 
                             btnWhereToGo.post(() -> {
                                 int[] location = new int[2];
                                 btnWhereToGo.getLocationOnScreen(location);
                                 int btnWhereToGoBottom = location[1] + btnWhereToGo.getHeight();
-                                ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) finalLocationButton
-                                        .getLayoutParams();
-                                params.topMargin = btnWhereToGoBottom
-                                        + (int) (16 * getResources().getDisplayMetrics().density); // 16dp below
-                                params.rightMargin = (int) (24 * getResources().getDisplayMetrics().density); // keep
-                                                                                                              // right
-                                                                                                              // margin
+                                ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) finalLocationButton.getLayoutParams();
+                                params.topMargin = btnWhereToGoBottom + (int) (16 * getResources().getDisplayMetrics().density);
+                                params.rightMargin = (int) (24 * getResources().getDisplayMetrics().density);
                                 finalLocationButton.setLayoutParams(params);                                                                                                            });
                         } else {
-                            ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) locationButton
-                                    .getLayoutParams();
+                            ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) locationButton.getLayoutParams();
                             params.topMargin = topMarginPx;
                             params.rightMargin = (int) (24 * getResources().getDisplayMetrics().density);
                             locationButton.setLayoutParams(params);
@@ -176,14 +172,22 @@ public class MainStuActivity extends AppCompatActivity {
                     }
                 }
                 if (routesContainingStop.isEmpty()) {
-                    Toast.makeText(MainStuActivity.this, "No routes found for this stop", Toast.LENGTH_SHORT).show();
+                    tvEmpty.setVisibility(View.VISIBLE);
+                    tvRoutesTitle.setVisibility(View.GONE);
+                    rvRoutes.setVisibility(View.GONE);
+                } else {
+                    tvEmpty.setVisibility(View.GONE);
+                    tvRoutesTitle.setVisibility(View.VISIBLE);
+                    rvRoutes.setVisibility(View.VISIBLE);
                 }
                 routeAdapter.updateRoutes(routesContainingStop);
             }
             @Override
             public void onError(Exception e) {
-                Toast.makeText(MainStuActivity.this, "Error loading routes", Toast.LENGTH_SHORT).show();
                 routeAdapter.updateRoutes(new ArrayList<>());
+                tvEmpty.setVisibility(View.VISIBLE);
+                tvRoutesTitle.setVisibility(View.GONE);
+                rvRoutes.setVisibility(View.GONE);
             }
         });
     }

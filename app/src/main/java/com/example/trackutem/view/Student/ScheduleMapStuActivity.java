@@ -108,7 +108,7 @@ public class ScheduleMapStuActivity extends AppCompatActivity implements OnMapRe
                 @Override
                 public void onSuccess(String rpointName) {
                     selectedRPointNameToQueue = rpointName;
-                    tvQueuePrompt.setText("Queue at " + rpointName);
+                    tvQueuePrompt.setText("Queue at " + rpointName + "?");
                     checkIfAlreadyQueued();
                 }
                 @Override
@@ -186,7 +186,8 @@ public class ScheduleMapStuActivity extends AppCompatActivity implements OnMapRe
                             currentRPoints = schedule.getRPoints();
                             resolveRPointNames(currentRPoints, rpointNames -> {
                                 currentRPointNames = rpointNames;
-                                updateRPointsAdapter();
+                                checkIfInitialSelectedRPointIsArrivedAndAdjust();
+                                checkIfAlreadyQueued();
                             });
                             if (routeId != null) {
                                 fetchRoutePoints(routeId);
@@ -195,19 +196,23 @@ public class ScheduleMapStuActivity extends AppCompatActivity implements OnMapRe
                             Log.d("ScheduleMapStuActivity", "Schedule or RPoints are null/empty.");
                             currentRPoints = new ArrayList<>();
                             currentRPointNames = new ArrayList<>();
-                            updateRPointsAdapter();
+                            checkIfAlreadyQueued();
                         }
                     } else {
                         Log.d("ScheduleMapStuActivity", "Current data: null");
                         currentRPoints = new ArrayList<>();
                         currentRPointNames = new ArrayList<>();
-                        updateRPointsAdapter();
+                        checkIfAlreadyQueued();
                     }
                 });
     }
     private void resolveRPointNames(List<Schedule.RPointDetail> rpoints, java.util.function.Consumer<List<String>> callback) {
         String[] rpointNamesArray = new String[rpoints.size()];
         AtomicInteger counter = new AtomicInteger(0);
+        if (rpoints.isEmpty()) {
+            callback.accept(new ArrayList<>());
+            return;
+        }
         for (int i = 0; i < rpoints.size(); i++) {
             final int idx = i;
             new RoutePoint().getRPointNameById(rpoints.get(i).getRPointId(), new RoutePoint.RPointCallback() {
@@ -242,6 +247,68 @@ public class ScheduleMapStuActivity extends AppCompatActivity implements OnMapRe
             }
         });
     }
+    private void checkIfInitialSelectedRPointIsArrivedAndAdjust() {
+        if (selectedRPointIdToQueue != null && currentRPoints != null && !currentRPoints.isEmpty()) {
+            int originalIndex = -1;
+            for (int i = 0; i < currentRPoints.size(); i++) {
+                if (currentRPoints.get(i).getRPointId().equals(selectedRPointIdToQueue)) {
+                    originalIndex = i;
+                    break;
+                }
+            }
+
+            if (originalIndex != -1) {
+                Schedule.RPointDetail originalRPoint = currentRPoints.get(originalIndex);
+                if ("arrived".equals(originalRPoint.getStatus())) {
+                    int nextAvailableIndex = -1;
+                    for (int i = originalIndex + 1; i < currentRPoints.size(); i++) {
+                        if (!"arrived".equals(currentRPoints.get(i).getStatus())) {
+                            nextAvailableIndex = i;
+                            break;
+                        }
+                    }
+
+                    if (nextAvailableIndex != -1) {
+                        selectedRPointIdToQueue = currentRPoints.get(nextAvailableIndex).getRPointId();
+                        selectedRPointNameToQueue = currentRPointNames.get(nextAvailableIndex);
+                        tvQueuePrompt.setText("Queue at " + selectedRPointNameToQueue + "?");
+                    } else {
+                        selectedRPointIdToQueue = null;
+                        selectedRPointNameToQueue = null;
+                        tvQueuePrompt.setText("No available stops to queue.");
+                    }
+                } else {
+                    selectedRPointNameToQueue = currentRPointNames.get(originalIndex);
+                    tvQueuePrompt.setText("Queue at " + selectedRPointNameToQueue + "?");
+                }
+            } else {
+                findFirstAvailableRPoint();
+            }
+        } else {
+            findFirstAvailableRPoint();
+        }
+        updateQueueButtonsVisibility();
+    }
+    private void findFirstAvailableRPoint() {
+        selectedRPointIdToQueue = null;
+        selectedRPointNameToQueue = null;
+
+        if (currentRPoints != null && !currentRPoints.isEmpty()) {
+            for (int i = 0; i < currentRPoints.size(); i++) {
+                if (!"arrived".equals(currentRPoints.get(i).getStatus())) {
+                    selectedRPointIdToQueue = currentRPoints.get(i).getRPointId();
+                    selectedRPointNameToQueue = currentRPointNames.get(i);
+                    tvQueuePrompt.setText("Queue at " + selectedRPointNameToQueue + "?");
+                    break;
+                }
+            }
+        }
+
+        if (selectedRPointIdToQueue == null) {
+            tvQueuePrompt.setText("No available stops to queue.");
+        }
+    }
+
     private void fetchDriverLocation() {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         DocumentReference driverRef = db.collection("drivers").document(driverId);
@@ -259,8 +326,7 @@ public class ScheduleMapStuActivity extends AppCompatActivity implements OnMapRe
                             busLocationMarker.remove();
                         }
 
-                        busLocationMarker = mMap.addMarker(
-                                new MarkerOptions().position(latLng).title("Bus Location").icon(mapController.getBusLocationIcon()));
+                        busLocationMarker = mMap.addMarker(new MarkerOptions().position(latLng).title("Bus Location").icon(mapController.getBusLocationIcon()));
                         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16));
                     }
                 } else {
@@ -277,7 +343,7 @@ public class ScheduleMapStuActivity extends AppCompatActivity implements OnMapRe
         });
     }
     private void checkIfAlreadyQueued() {
-        if (studentId == null) { // Handle case where studentId is null
+        if (studentId == null) {
             isQueued = false;
             updateQueueButtonsVisibility();
             updateRPointsAdapter();
@@ -355,7 +421,7 @@ public class ScheduleMapStuActivity extends AppCompatActivity implements OnMapRe
         if (!isQueued) {
             this.selectedRPointIdToQueue = rpointId;
             this.selectedRPointNameToQueue = rpointName;
-            tvQueuePrompt.setText("Queue at " + rpointName);
+            tvQueuePrompt.setText("Queue at " + rpointName + "?");
             updateQueueButtonsVisibility();
         } else {
             Toast.makeText(this, "You are already queued. Please cancel your current queue first.", Toast.LENGTH_SHORT).show();

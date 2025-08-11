@@ -20,7 +20,6 @@
         app:strokeWidth="2dp"
         app:cardBackgroundColor="@android:color/white"
         app:layout_constraintStart_toStartOf="@id/guideline"
-        app:layout_constraintTop_toTopOf="@id/tvRPointName"
         app:layout_constraintBottom_toBottomOf="@id/tvRPointName">
 
         <ImageView
@@ -42,23 +41,37 @@
         android:lineSpacingExtra="4dp"
         android:textColor="?attr/colorOnSurface"
         android:textSize="16sp"
-        app:layout_constraintBottom_toTopOf="@+id/barrier"
         app:layout_constraintStart_toEndOf="@id/indicatorCard"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toTopOf="@id/indicatorCard"
         app:layout_constraintEnd_toStartOf="@id/btnArrival"
         app:lineHeight="24sp" />
+
+    <!-- Expected Departure Time -->
+    <TextView
+        android:id="@+id/tvExpDepTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:text="00:00"
+        android:textSize="14sp"
+        android:textColor="@color/textSecondary"
+        app:layout_constraintStart_toEndOf="@id/indicatorCard"
+        app:layout_constraintTop_toBottomOf="@id/tvRPointName"
+        app:layout_constraintBottom_toTopOf="@+id/barrier"
+        android:layout_marginTop="2dp"/>
 
     <!-- Lateness Indicator -->
     <TextView
         android:id="@+id/tvLateness"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_marginStart="8dp"
+        android:text="+0 min"
         android:textSize="12sp"
         android:textColor="@color/colorError"
-        app:layout_constraintStart_toStartOf="@id/tvRPointName"
-        app:layout_constraintTop_toBottomOf="@id/tvRPointName"
-        app:layout_constraintBottom_toTopOf="@+id/barrier"/>
+        app:layout_constraintStart_toEndOf="@id/tvExpDepTime"
+        app:layout_constraintTop_toTopOf="@+id/tvExpDepTime"
+        app:layout_constraintBottom_toBottomOf="@+id/tvExpDepTime"/>
 
     <!-- Barrier to handle dynamic content -->
     <androidx.constraintlayout.widget.Barrier
@@ -66,8 +79,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:barrierDirection="bottom"
-        app:constraint_referenced_ids="tvRPointName,tvLateness"
-        app:layout_constraintTop_toBottomOf="@id/tvRPointName"/>
+        app:constraint_referenced_ids="tvRPointName,tvExpDepTime,tvLateness"
+        app:layout_constraintTop_toBottomOf="@id/tvExpDepTime"/>
 
     <!-- Arrival Button -->
     <Button

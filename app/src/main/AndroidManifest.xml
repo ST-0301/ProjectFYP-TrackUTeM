@@ -64,18 +64,30 @@
 <!--            android:name=".view.ScheduleDetailsFragment"-->
 <!--            android:screenOrientation="portrait" />-->
 
-
         <!-- Driver Activities -->
         <activity
             android:name=".MainDrvActivity"
             android:exported="false"
             android:label="MainActivity" />
+        <activity android:name=".view.Driver.ScheduleDetailsActivity"/>
+
+
+        <activity
+            android:name=".view.SettingsActivity"/>
 
         <!-- Services -->
         <service
             android:name=".service.TrackingService"
             android:exported="false"
             android:foregroundServiceType="location" />
+
+        <service
+            android:name=".service.MyFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+            </intent-filter>
+        </service>
 
         <!-- Receivers -->
         <receiver

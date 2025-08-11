@@ -28,8 +28,7 @@ public class RPointsTimelineStuAdapter extends RecyclerView.Adapter<RPointsTimel
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_rpoint_timeline_stu, parent, false);
+        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_rpoint_timeline_stu, parent, false);
         return new ViewHolder(v, listener, rpoints, rpointNames);
     }
     @Override
@@ -53,9 +52,10 @@ public class RPointsTimelineStuAdapter extends RecyclerView.Adapter<RPointsTimel
                 holder.ivStatus.setColorFilter(holder.itemView.getContext().getColor(R.color.textSecondary));
                 break;
         }
-        holder.itemView.setAlpha(isClickable ? 1.0f : 0.5f);
-        holder.itemView.setClickable(isClickable);
-        holder.itemView.setFocusable(isClickable);
+        boolean itemIsActuallyClickable = this.isClickable && !"arrived".equals(rpoint.getStatus());
+        holder.itemView.setAlpha(itemIsActuallyClickable ? 1.0f : 0.5f);
+        holder.itemView.setClickable(itemIsActuallyClickable);
+        holder.itemView.setFocusable(itemIsActuallyClickable);
     }
     @Override
     public int getItemCount() {
@@ -64,13 +64,13 @@ public class RPointsTimelineStuAdapter extends RecyclerView.Adapter<RPointsTimel
     static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView ivStatus;
         TextView tvRPointName, tvExpDepTime;
-        ViewHolder(View v, OnItemClickListener listener, List<Schedule.RPointDetail> rpoints, List<String> rpointNames, boolean isClickable) {
+        ViewHolder(View v, OnItemClickListener listener, List<Schedule.RPointDetail> rpoints, List<String> rpointNames) {
             super(v);
             ivStatus = v.findViewById(R.id.ivStatus);
             tvRPointName = v.findViewById(R.id.tvRPointName);
             tvExpDepTime = v.findViewById(R.id.tvExpDepTime);
             v.setOnClickListener(view -> {
-                if (isClickable && listener != null) {
+                if (listener != null) {
                     int position = getAdapterPosition();
                     if (position != RecyclerView.NO_POSITION) {
                         listener.onItemClick(rpoints.get(position).getRPointId(), rpointNames.get(position));

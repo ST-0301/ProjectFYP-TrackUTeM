@@ -47,7 +47,6 @@ public class LoginActivity extends AppCompatActivity {
         prefs = getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
         loginController = new LoginController();
 
-        // !!! LATER SET THIS TO true !!!
         if(prefs.getBoolean("remember_me", true)) {
             String savedEmail = prefs.getString("email", "").toLowerCase();
             if (savedEmail.endsWith("@student.utem.edu.my")) {
@@ -152,8 +151,8 @@ public class LoginActivity extends AppCompatActivity {
             editor.putString("email", email);
         } else {
             editor.putBoolean("remember_me", false);
+            editor.remove("email");
         }
-        // Only add driverId if it's a driver login
         if (driver != null) {
             editor.putString("driverId", driver.getDriverId());
         } else if (student != null) {

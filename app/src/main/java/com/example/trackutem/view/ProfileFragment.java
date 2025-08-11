@@ -58,9 +58,9 @@ public class ProfileFragment extends Fragment {
         return phone != null && phone.length() >= 10;
     }
     private void navigateToSettings() {
-        requireActivity().getSupportFragmentManager().beginTransaction()
-                .replace(R.id.nav_host_fragment, new SettingsFragment())
-                .addToBackStack(null)  // Optional: Add to back stack
-                .commit();
+//        requireActivity().getSupportFragmentManager().beginTransaction()
+//                .replace(R.id.nav_host_fragment, new SettingsFragment())
+//                .addToBackStack(null)  // Optional: Add to back stack
+//                .commit();
     }
 }

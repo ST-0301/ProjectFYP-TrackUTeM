@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
@@ -18,7 +19,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.trackutem.controller.MapController;
 import com.example.trackutem.model.Route;
 import com.example.trackutem.model.RoutePoint;
+import com.example.trackutem.service.MyFirebaseMessagingService;
 import com.example.trackutem.view.RouteAdapter;
+import com.example.trackutem.view.SettingsActivity;
 import com.example.trackutem.view.Student.GetDirectionActivity;
 import com.example.trackutem.view.Student.RouteScheduleActivity;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -27,6 +30,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
+import com.google.firebase.messaging.FirebaseMessaging;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,32 +38,55 @@ public class MainStuActivity extends AppCompatActivity {
     private static final int REQUEST_LOCATION_PERMISSION = 1001;
     private FusedLocationProviderClient fusedLocationClient;
     private MapController mapController;
-    private MaterialCardView searchCard;
-    private MaterialButton btnWhereToGo;
+    private MaterialButton btnWhereToGo, btnNotifications, btnSettings;
     private MaterialCardView bottomSheet;
     private BottomSheetBehavior<View> behavior;
     private TextView tvStopName, tvRoutesTitle, tvEmpty;
     private RecyclerView rvRoutes;
     private RouteAdapter routeAdapter;
+    private FrameLayout fragmentContainer, searchBarContainer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_stu);
+
+        searchBarContainer = findViewById(R.id.searchBarContainer);
+        btnWhereToGo = findViewById(R.id.btnWhereToGo);
+//        btnNotifications = findViewById(R.id.btnNotifications);
+        btnSettings = findViewById(R.id.btnSettings);
+        bottomSheet = findViewById(R.id.bottomSheetCard);
+        tvStopName = bottomSheet.findViewById(R.id.tvStopName);
+        tvRoutesTitle = findViewById(R.id.tvRoutesTitle);
+        rvRoutes = bottomSheet.findViewById(R.id.rvRoutes);
+        tvEmpty = bottomSheet.findViewById(R.id.tvEmpty);
+        fragmentContainer = findViewById(R.id.fragmentContainer);
+
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         checkLocationPermissions();
 
-        btnWhereToGo = findViewById(R.id.btnWhereToGo);
+
         btnWhereToGo.setOnClickListener(v -> {
             Intent intent = new Intent(MainStuActivity.this, GetDirectionActivity.class);
             startActivity(intent);
         });
+//        btnNotifications.setOnClickListener(v -> {
+//            // Handle notification button click, e.g., start a NotificationActivity
+//            Toast.makeText(MainStuActivity.this, "Notifications clicked", Toast.LENGTH_SHORT).show();
+//        });
+        btnSettings.setOnClickListener(v -> {
+            startActivity(new Intent(MainStuActivity.this, SettingsActivity.class));
+        });
+//        getSupportFragmentManager().addOnBackStackChangedListener(() -> {
+//            if (getSupportFragmentManager().getBackStackEntryCount() == 0) {
+////                fragmentContainer.setVisibility(View.GONE);
+//                // behavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+//            }
+//        });
 
-        bottomSheet = findViewById(R.id.bottomSheetCard);
         behavior = BottomSheetBehavior.from(bottomSheet);
         DisplayMetrics metrics = getResources().getDisplayMetrics();
         int peekHeight = (int) (metrics.heightPixels * 0.25); // 25% of screen
-//        int halfHeight = (int) (metrics.heightPixels * 0.55); // 55% of screen
         behavior.setPeekHeight(peekHeight, true);
         behavior.setHideable(true);
         behavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
@@ -73,10 +100,6 @@ public class MainStuActivity extends AppCompatActivity {
             }
         });
 
-        tvStopName = bottomSheet.findViewById(R.id.tvStopName);
-        tvRoutesTitle = findViewById(R.id.tvRoutesTitle);
-        rvRoutes = bottomSheet.findViewById(R.id.rvRoutes);
-        tvEmpty = bottomSheet.findViewById(R.id.tvEmpty);
 
         // Setup RecyclerView
         rvRoutes.setLayoutManager(new LinearLayoutManager(this));
@@ -86,13 +109,21 @@ public class MainStuActivity extends AppCompatActivity {
             startActivity(intent);
         });
         rvRoutes.setAdapter(routeAdapter);
-    }
 
+        uploadCurrentToken();
+    }
+    private void uploadCurrentToken() {
+        FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        String token = task.getResult();
+                        MyFirebaseMessagingService.uploadTokenToFirestore(this, token);
+                    }
+                });
+    }
     private void checkLocationPermissions() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                    REQUEST_LOCATION_PERMISSION
-            );
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
         } else {
             initializeMap();
         }
@@ -190,5 +221,17 @@ public class MainStuActivity extends AppCompatActivity {
                 rvRoutes.setVisibility(View.GONE);
             }
         });
+    }
+    @Override
+    public void onBackPressed() {
+        if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+            getSupportFragmentManager().popBackStack();
+            findViewById(R.id.map).setVisibility(View.VISIBLE);
+            findViewById(R.id.searchBarContainer).setVisibility(View.VISIBLE);
+            findViewById(R.id.bottomSheetCard).setVisibility(View.VISIBLE);
+            fragmentContainer.setVisibility(View.GONE);
+        } else {
+            super.onBackPressed();
+        }
     }
 }

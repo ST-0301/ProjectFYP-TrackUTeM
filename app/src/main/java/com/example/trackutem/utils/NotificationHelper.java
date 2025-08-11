@@ -11,9 +11,10 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.util.Log;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import com.example.trackutem.R;
-import com.example.trackutem.view.Driver.ScheduleDetailsFragment;
+import com.example.trackutem.view.Driver.ScheduleDetailsActivity;
 
 public class NotificationHelper {
     private static final String TAG = "NotificationHelper";
@@ -21,6 +22,7 @@ public class NotificationHelper {
     private static final String CHANNEL_ID_FINISH = "TRACKUTEM_TIMER_FINISH";
     private static final String CHANNEL_ID_FOREGROUND = "TRACKUTEM_FOREGROUND";
     private static final String CHANNEL_ID_GEOFENCE = "TRACKUTEM_GEOFENCE";
+    private static final String CHANNEL_ID_PUSH = "TRACKUTEM_PUSH";
     private static final int NOTIFICATION_ID_WARNING = 100;
     private static final int NOTIFICATION_ID_FINISH = 101;
     private final Context context;
@@ -76,7 +78,7 @@ public class NotificationHelper {
         }
 
         // Open app when notification is tapped
-        Intent intent = new Intent(context, ScheduleDetailsFragment.class);
+        Intent intent = new Intent(context, ScheduleDetailsActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
@@ -95,7 +97,7 @@ public class NotificationHelper {
         notificationManager.notify(notificationId, builder.build());
     }
     public Notification buildForegroundTrackingNotification() {
-        Intent intent = new Intent(context, ScheduleDetailsFragment.class);
+        Intent intent = new Intent(context, ScheduleDetailsActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
         return new NotificationCompat.Builder(context, CHANNEL_ID_FOREGROUND)
@@ -109,7 +111,7 @@ public class NotificationHelper {
     }
 
     public Notification sendGeofenceNotification(String rpointName) {
-        Intent intent = new Intent(context, ScheduleDetailsFragment.class);
+        Intent intent = new Intent(context, ScheduleDetailsActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
@@ -121,5 +123,16 @@ public class NotificationHelper {
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true)
                 .build();
+    }
+
+    public void showPushNotification(String title, String message) {
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID_PUSH)
+                .setSmallIcon(R.drawable.ic_notifications)
+                .setContentTitle(title)
+                .setContentText(message)
+                .setPriority(NotificationCompat.PRIORITY_HIGH);
+
+        NotificationManagerCompat manager = NotificationManagerCompat.from(context);
+        manager.notify((int) System.currentTimeMillis(), builder.build());
     }
 }

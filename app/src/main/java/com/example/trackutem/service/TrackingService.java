@@ -16,8 +16,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.example.trackutem.controller.TrackingController;
 import com.example.trackutem.model.RoutePoint;
-import com.example.trackutem.view.Driver.ScheduleDetailsFragment;
 import com.example.trackutem.utils.NotificationHelper;
+import com.example.trackutem.view.Driver.ScheduleDetailsActivity;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingEvent;
@@ -53,7 +53,7 @@ public class TrackingService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "onStartCommand called with action: " + (intent != null ? intent.getAction() : "null"));
-        if (intent != null && ScheduleDetailsFragment.GEOFENCE_BROADCAST_ACTION.equals(intent.getAction())) {
+        if (intent != null && ScheduleDetailsActivity.GEOFENCE_BROADCAST_ACTION.equals(intent.getAction())) {
             handleGeofenceTransition(intent);
         } else {
             startLocationUpdates();
@@ -83,7 +83,7 @@ public class TrackingService extends Service {
                 new RoutePoint().getRPointNameById(geofenceId, new RoutePoint.RPointCallback() {
                     @Override
                     public void onSuccess(String rpointName) {
-                        Intent broadcastIntent = new Intent(ScheduleDetailsFragment.GEOFENCE_BROADCAST_ACTION);
+                        Intent broadcastIntent = new Intent(ScheduleDetailsActivity.GEOFENCE_BROADCAST_ACTION);
                         broadcastIntent.putExtra("transitionType", geofenceTransition);
                         broadcastIntent.putExtra("geofenceId", geofenceId);
                         broadcastIntent.putExtra("rpointName", rpointName);

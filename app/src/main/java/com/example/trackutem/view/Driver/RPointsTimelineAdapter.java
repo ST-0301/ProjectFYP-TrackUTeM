@@ -52,7 +52,8 @@ public class RPointsTimelineAdapter extends RecyclerView.Adapter<RPointsTimeline
         if (rpointDetails != null && position < rpointDetails.size()) {
             Schedule.RPointDetail rpoint = rpointDetails.get(position);
 
-            // Only show button for current departed route point
+            holder.tvExpDepTime.setText(rpoint.getExpDepTime());
+
             boolean showButton = (position == currentRPointIndex && "departed".equals(rpoint.getStatus()) && (currentRPointIndex != -1));
             holder.btnArrival.setVisibility(showButton ? View.VISIBLE : View.GONE);
 
@@ -60,7 +61,8 @@ public class RPointsTimelineAdapter extends RecyclerView.Adapter<RPointsTimeline
             switch (rpoint.getStatus()) {
                 case "arrived":
                     holder.rpointIndicator.setImageResource(R.drawable.ic_arrived);
-                    holder.btnArrival.setVisibility(showButton ? View.VISIBLE : View.GONE);
+                    holder.btnArrival.setVisibility(View.GONE);
+//                    holder.btnArrival.setVisibility(showButton ? View.VISIBLE : View.GONE);
                     break;
                 case "departed":
                     holder.rpointIndicator.setImageResource(R.drawable.ic_departed);
@@ -68,19 +70,24 @@ public class RPointsTimelineAdapter extends RecyclerView.Adapter<RPointsTimeline
                     break;
                 default:
                     holder.rpointIndicator.setImageResource(R.drawable.ic_location);
+                    holder.btnArrival.setVisibility(View.GONE);
                     break;
             }
 
             // Show lateness if available
             if (rpoint.getLatenessMinutes() != 0) {
-                String latenessText = rpoint.getLatenessMinutes() > 0 ?
-                        "+" + rpoint.getLatenessMinutes() + " min" :
-                        rpoint.getLatenessMinutes() + " min";
+                String latenessText = rpoint.getLatenessMinutes() > 0 ? "+" + rpoint.getLatenessMinutes() + " min" : rpoint.getLatenessMinutes() + " min";
                 holder.tvLateness.setText(latenessText);
                 holder.tvLateness.setVisibility(View.VISIBLE);
             } else {
                 holder.tvLateness.setVisibility(View.GONE);
             }
+        } else {
+            // If no rpointDetails or out of bounds, hide dynamic elements
+            holder.tvExpDepTime.setVisibility(View.GONE);
+            holder.tvLateness.setVisibility(View.GONE);
+            holder.btnArrival.setVisibility(View.GONE);
+            holder.rpointIndicator.setImageResource(R.drawable.ic_location);
         }
     }
     @Override
@@ -97,6 +104,7 @@ public class RPointsTimelineAdapter extends RecyclerView.Adapter<RPointsTimeline
         TextView tvRPointName;
         ImageView rpointIndicator;
         TextView tvLateness;
+        TextView tvExpDepTime;
         Button btnArrival;
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -104,6 +112,7 @@ public class RPointsTimelineAdapter extends RecyclerView.Adapter<RPointsTimeline
             rpointIndicator = itemView.findViewById(R.id.rpointIndicator);
 
             tvLateness = itemView.findViewById(R.id.tvLateness);
+            tvExpDepTime = itemView.findViewById(R.id.tvExpDepTime);
             btnArrival = itemView.findViewById(R.id.btnArrival);
         }
     }

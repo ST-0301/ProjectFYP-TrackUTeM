@@ -1,4 +1,3 @@
-// ScheduleDetailsFragment.java
 package com.example.trackutem.view.Driver;
 
 import android.Manifest;
@@ -16,10 +15,6 @@ import android.os.Bundle;
 import android.os.Looper;
 import android.transition.TransitionManager;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -27,9 +22,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
-import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.trackutem.MainDrvActivity;
@@ -65,16 +59,16 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.firestore.FirebaseFirestore;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-
 import retrofit2.Retrofit;
 
-public class ScheduleDetailsFragment extends Fragment implements TimerController.TimerCallback {
+public class ScheduleDetailsActivity extends AppCompatActivity  implements TimerController.TimerCallback {
+    private static final String EXTRA_ROUTE_ID = "routeId";
+    private static final String EXTRA_SCHEDULE_ID = "scheduleId";
     private static final long REST_DURATION_MILLIS = 2 * 60 * 1000;
     private static final long FIVE_MINUTES_WARNING = 1 * 60 * 1000;
     private static final int REQUEST_LOCATION_PERMISSION = 1001;
@@ -105,58 +99,82 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
     private static final long GEOFENCE_EXPIRATION_IN_MILLISECONDS = Geofence.NEVER_EXPIRE;
     private GeofencingClient geofencingClient;
     private PendingIntent geofencePendingIntent;
-    private GeofenceBroadcastReceiver geofenceReceiver;
+    private ScheduleDetailsActivity.GeofenceBroadcastReceiver geofenceReceiver;
     public static final String GEOFENCE_BROADCAST_ACTION = "com.example.trackutem.GEOFENCE_TRANSITION";
     private LocationCallback locationCallback;
     private boolean requestingLocationUpdates = false;
 
-    @Nullable @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_schedule_details, container, false);
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_schedule_details);
 
-        // Retrieve arguments
-        Bundle args = getArguments();
-        if (args != null) {
-            routeId = args.getString("routeId");
-            scheduleId = args.getString("scheduleId");
-        } else {
-            Toast.makeText(requireContext(), "Route details not found.", Toast.LENGTH_SHORT).show();
-            requireActivity().getSupportFragmentManager().popBackStack();
-            return view;
+        routeId = getIntent().getStringExtra("routeId");
+        scheduleId = getIntent().getStringExtra("scheduleId");
+        if (routeId == null || scheduleId == null) {
+            Toast.makeText(this, "Route details not found", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
         }
 
         // find views
-        btnStart   = view.findViewById(R.id.btnStart);
-        btnRest    = view.findViewById(R.id.btnRest);
-        btnContinue= view.findViewById(R.id.btnContinue);
-        btnStop    = view.findViewById(R.id.btnStop);
-        tvTimer    = view.findViewById(R.id.tvTimer);
-        controlGroup = view.findViewById(R.id.controlGroup);
-        rvRPoints = view.findViewById(R.id.rvRPoints);
+        toolbar = findViewById(R.id.toolbar);
+        btnStart   = findViewById(R.id.btnStart);
+        btnRest    = findViewById(R.id.btnRest);
+        btnContinue= findViewById(R.id.btnContinue);
+        btnStop    = findViewById(R.id.btnStop);
+        tvTimer    = findViewById(R.id.tvTimer);
+        controlGroup = findViewById(R.id.controlGroup);
+        rvRPoints = findViewById(R.id.rvRPoints);
+
+        // Set up toolbar
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        toolbar.setNavigationOnClickListener(v -> finish());
 
         // RecyclerView setup
-        rvRPoints.setLayoutManager(new LinearLayoutManager(requireContext()));
-        adapter = new RPointsTimelineAdapter(requireContext(), rpointList);
+        rvRPoints.setLayoutManager(new LinearLayoutManager(this));
+        adapter = new RPointsTimelineAdapter(this, rpointList);
+        adapter.setOnActionButtonClickListener((position, isLastRPoint) -> {
+            if (currentSchedule != null && position == currentRPointIndex) {
+                ScheduleController.recordArrivalAndNextDeparture(currentSchedule, position);
+
+                // Update UI
+                currentRPointIndex = currentSchedule.getCurrentRPointIndex();
+                adapter.setCurrentRPointIndex(currentRPointIndex);
+                adapter.notifyDataSetChanged();
+
+                // If this was the last route point, end the trip
+                if (isLastRPoint) {
+                    endTrip();
+                    Toast.makeText(this, "Route completed!", Toast.LENGTH_SHORT).show();
+                }
+                // Prepare for next route point if not completed
+                else if (currentRPointIndex != -1) {
+                    startGeofencing();
+                }
+            }
+        });
         rvRPoints.setAdapter(adapter);
 
         currentDriver = new Driver();
 
-        // prefs/controllers
-        prefs = requireActivity().getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
+        // Initialize controllers and services
+        prefs = getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
         driverId = prefs.getString("driverId", null);
-        appStateManager = new AppStateManager(requireContext());
+        appStateManager = new AppStateManager(this);
         restLogController = new RestLogController();
-        timerController = new TimerController(this, new NotificationHelper(requireContext()));
-        notificationHelper = new NotificationHelper(requireContext());
-
-        // Initialize GeofencingClient
-        geofencingClient = LocationServices.getGeofencingClient(requireActivity());
+        timerController = new TimerController(this, new NotificationHelper(this));
+        notificationHelper = new NotificationHelper(this);
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        geofencingClient = LocationServices.getGeofencingClient(this);
         geofenceReceiver = new GeofenceBroadcastReceiver();
 
         restoreUIState();
 
+        // Button click listeners
         btnStart.setOnClickListener(v -> {
-            View root = view.findViewById(R.id.rootContainer);
+            View root = findViewById(R.id.rootContainer);
             if (root instanceof ViewGroup) {
                 TransitionManager.beginDelayedTransition((ViewGroup) root);
             }
@@ -171,7 +189,7 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
             currentDriver.updateDriverCurrentSchedule(driverId, scheduleId);
             restLogController.createTodayRestLog(driverId, ref -> {});
 
-            requireActivity().startService(new Intent(requireActivity(), TrackingService.class));
+            startService(new Intent(this, TrackingService.class));
             appStateManager.saveState("start", 0, true);
 
             startTrip();
@@ -187,7 +205,8 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
             restLogController.incrementRestCount(driverId);
 
             // Stop tracking
-            requireActivity().stopService(new Intent(requireActivity(), TrackingService.class));
+            Intent serviceIntent = new Intent(this, TrackingService.class);
+            stopService(serviceIntent);
             stopGeofencing();
             stopLocationUpdatesForProximity();
 
@@ -205,7 +224,7 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
 
             // Resume tracking
             currentDriver.updateDriverStatus(driverId, "on_duty");
-            requireActivity().startService(new Intent(requireActivity(), TrackingService.class));
+            startService(new Intent(this, TrackingService.class));
             startGeofencing();
             startLocationUpdatesForProximity();
 
@@ -220,15 +239,15 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
         // Fetch schedule with route point details
         fetchScheduleWithRPointDetails(scheduleId);
 
-        setHasOptionsMenu(true);
-        return view;
+        checkPermissions();
     }
     private void endTrip() {
         // Record end working time
         restLogController.updateEndWorkTime(driverId);
         currentDriver.updateDriverStatus(driverId, "available");
 
-        requireActivity().stopService(new Intent(requireActivity(), TrackingService.class));
+        Intent serviceIntent = new Intent(this, TrackingService.class);
+        stopService(serviceIntent);
         timerController.stopCountdown();
         appStateManager.clear();
 
@@ -249,42 +268,6 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
         btnStop.setVisibility(View.GONE);
         tvTimer.setVisibility(View.GONE);
     }
-
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-
-        // Setup toolbar
-        MainDrvActivity activity = (MainDrvActivity) getActivity();
-        if (activity != null) {
-            activity.updateToolbar("Details", true);
-        }
-
-        // init the location client
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
-        checkPermissions();
-
-        adapter.setOnActionButtonClickListener((position, isLastRPoint) -> {
-            if (currentSchedule != null && position == currentRPointIndex) {
-                ScheduleController.recordArrivalAndNextDeparture(currentSchedule, position);
-
-                // Update UI
-                currentRPointIndex = currentSchedule.getCurrentRPointIndex();
-                adapter.setCurrentRPointIndex(currentRPointIndex);
-                adapter.notifyDataSetChanged();
-
-                // If this was the last route point, end the trip
-                if (isLastRPoint) {
-                    endTrip();
-                    Toast.makeText(requireContext(), "Route completed!", Toast.LENGTH_SHORT).show();
-                }
-                // Prepare for next route point if not completed
-                else if (currentRPointIndex != -1) {
-                    startGeofencing();
-                }
-            }
-        });
-    }
     private GeofencingRequest getGeofencingRequest(Geofence geofence) {
         return new GeofencingRequest.Builder()
                 .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
@@ -295,9 +278,9 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
         if (geofencePendingIntent != null) {
             return geofencePendingIntent;
         }
-        Intent intent = new Intent(requireContext(), TrackingService.class);
+        Intent intent = new Intent(this, TrackingService.class);
         intent.setAction(GEOFENCE_BROADCAST_ACTION);
-        geofencePendingIntent = PendingIntent.getService(requireContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ? PendingIntent.FLAG_IMMUTABLE : 0));
+        geofencePendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ? PendingIntent.FLAG_IMMUTABLE : 0));
         return geofencePendingIntent;
     }
     private void startGeofencing() {
@@ -321,7 +304,7 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
                         .setExpirationDuration(GEOFENCE_EXPIRATION_IN_MILLISECONDS)
                         .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
                         .build();
-                if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                if (ContextCompat.checkSelfPermission(ScheduleDetailsActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                     geofencingClient.addGeofences(getGeofencingRequest(geofence), getGeofencePendingIntent())
                             .addOnSuccessListener(aVoid -> Log.d("Geofence", "Geofence added for route point: " + rpointId))
                             .addOnFailureListener(e -> {
@@ -351,7 +334,7 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
         }
     }
     private void startLocationUpdatesForProximity() {
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Log.w("LocationProximity", "Location permission not granted. Cannot start proximity updates.");
             return;
         }
@@ -361,7 +344,7 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
                 .addLocationRequest(locationRequest);
-        Task<LocationSettingsResponse> task = LocationServices.getSettingsClient(requireContext())
+        Task<LocationSettingsResponse> task = LocationServices.getSettingsClient(this)
                 .checkLocationSettings(builder.build());
 
         task.addOnCompleteListener(task1 -> {
@@ -373,7 +356,7 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
                     case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
                         try {
                             ResolvableApiException resolvable = (ResolvableApiException) exception;
-                            resolvable.startResolutionForResult(requireActivity(), 1002);
+                            resolvable.startResolutionForResult(this, 1002);
                         } catch (Exception e) {
                             Log.e("LocationProximity", "Error showing resolution dialog: " + e.getMessage());
                         }
@@ -471,7 +454,7 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
                         stopGeofencing();
                         stopLocationUpdatesForProximity();
                         endTrip();
-                        Toast.makeText(requireContext(), "Route completed!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ScheduleDetailsActivity.this, "Route completed!", Toast.LENGTH_SHORT).show();
                     }
                 }
             }
@@ -529,7 +512,7 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
         if (schedule == null || schedule.getRPoints() == null || schedule.getRPoints().isEmpty()) {
             return -1;
         }
-         return schedule.getCurrentRPointIndex();
+        return schedule.getCurrentRPointIndex();
     }
     private void resolveRPointNames(List<Schedule.RPointDetail> rpoints, Consumer<List<String>> callback) {
         String[] rpointNamesArray = new String[rpoints.size()];
@@ -561,25 +544,11 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
     private void startTrip() {
         currentSchedule.setTripStartTime(System.currentTimeMillis());
         currentSchedule.setStatus("in_progress");
-        // currentRPointIndex = 0;
-        // currentSchedule.setCurrentRPointIndex(currentRPointIndex);
 
-        // // Record departure for first route point
-        // if (!currentSchedule.getRPoints().isEmpty()) {
-        //     Schedule.RPointDetail firstRPoint = currentSchedule.getRPoints().get(0);
-        //     firstRPoint.setActDepTime(System.currentTimeMillis());
-        //     firstRPoint.setStatus("departed");
-        //     currentSchedule.setCurrentRPointIndex(0);
-        // }
-        // updateScheduleInFirestore();
-        // adapter.setCurrentRPointIndex(currentRPointIndex);
-        // adapter.notifyDataSetChanged();
-        // startGeofencing();
-        // startLocationUpdatesForProximity();
         if (!"event".equalsIgnoreCase(currentSchedule.getType())) {
             currentRPointIndex = 0;
             currentSchedule.setCurrentRPointIndex(currentRPointIndex);
-    
+
             if (!currentSchedule.getRPoints().isEmpty()) {
                 Schedule.RPointDetail firstRPoint = currentSchedule.getRPoints().get(0);
                 firstRPoint.setActDepTime(System.currentTimeMillis());
@@ -645,7 +614,7 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
                 btnStart.setVisibility(View.VISIBLE);
         }
         if (isTracking) {
-            requireActivity().startService(new Intent(requireActivity(), TrackingService.class));
+            startService(new Intent(this, TrackingService.class));
 
             // Restart geofencing and proximity checks
             if (currentSchedule != null && currentRPointIndex != -1) {
@@ -660,15 +629,15 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
         List<String> permissionsNeeded = new ArrayList<>();
 
         // Location permission
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             permissionsNeeded.add(Manifest.permission.ACCESS_FINE_LOCATION);
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, REQUEST_LOCATION_PERMISSION + 1);
         }
 
         // Android 13+ notifications
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             permissionsNeeded.add(Manifest.permission.POST_NOTIFICATIONS);
         }
 
@@ -690,9 +659,9 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
                 if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
                     allGranted = false;
                     if (permissions[i].equals(Manifest.permission.ACCESS_FINE_LOCATION)) {
-                        Toast.makeText(requireContext(), "Location permission required for tracking", Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, "Location permission required for tracking", Toast.LENGTH_LONG).show();
                     } else if (permissions[i].equals(Manifest.permission.ACCESS_BACKGROUND_LOCATION)) {
-                        Toast.makeText(requireContext(), "Background permission is recommended for reliable geofencing.", Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, "Background permission is recommended for reliable geofencing.", Toast.LENGTH_LONG).show();
                     }
                 }
             }
@@ -707,17 +676,13 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
         }
     }
     private void initializeMap() {
-        SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         if (mapFragment != null) {
             mapFragment.getMapAsync(googleMap -> {
-                mapController = new MapController(requireContext(), googleMap, fusedLocationClient);
+                mapController = new MapController(this, googleMap, fusedLocationClient);
                 mapController.initializeMapFeatures();
 
                 fetchAndDrawRoute();
-//                if (!rpointLocations.isEmpty()) {
-//                    mapController.addRouteMarkers(rpointLocations, rpointList);
-//                    getRoutePathFromDirections(rpointLocations);
-//                }
             });
         }
     }
@@ -733,75 +698,14 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
             }
             @Override
             public void onError(Exception e) {
-                Toast.makeText(requireContext(), "Error getting locations: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(ScheduleDetailsActivity.this, "Error getting locations: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
-
-//    private void getRoutePathFromDirections(List<LatLng> locations) {
-//        ConnectivityManager cm = (ConnectivityManager) requireContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-//        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-//        if (activeNetwork == null || !activeNetwork.isConnectedOrConnecting()) {
-//            Toast.makeText(requireContext(), "No internet connection", Toast.LENGTH_SHORT).show();
-//            return;
-//        }
-//        if (locations.size() < 2) return;
-//        if (retrofit == null) {
-//            retrofit = new Retrofit.Builder()
-//                    .baseUrl("https://maps.googleapis.com/maps/api/")
-//                    .addConverterFactory(GsonConverterFactory.create())
-//                    .build();
-//            directionsService = retrofit.create(DirectionsService.class);
-//        }
-//        LatLng origin = locations.get(0);
-//        LatLng destination = locations.get(locations.size() - 1);
-//        List<LatLng> waypoints = locations.subList(1, locations.size() - 1);
-//
-//        String originStr = origin.latitude + "," + origin.longitude;
-//        String destinationStr = destination.latitude + "," + destination.longitude;
-//        String waypointsStr = null;
-//        if (!waypoints.isEmpty()) {
-//            StringBuilder sb = new StringBuilder("optimize:true|");
-//            for (LatLng point : waypoints) {
-//                sb.append(point.latitude)
-//                        .append(",")
-//                        .append(point.longitude)
-//                        .append("|");
-//            }
-//            waypointsStr = sb.substring(0, sb.length() - 1);
-//        }
-//
-//        String apiKey = getString(R.string.directions_api_key);
-//        directionsService.getDirections(originStr, destinationStr, waypointsStr, apiKey)
-//                .enqueue(new Callback<DirectionsResponse>() {
-//                    @Override
-//                    public void onResponse(Call<DirectionsResponse> call, Response<DirectionsResponse> response) {
-//                        if (response.isSuccessful() && response.body() != null) {
-//                            DirectionsResponse directionsResponse = response.body();
-//                            if (directionsResponse.routes != null &&
-//                                    !directionsResponse.routes.isEmpty() &&
-//                                    directionsResponse.routes.get(0).overviewPolyline != null) {
-//
-//                                String polyline = directionsResponse.routes.get(0).overviewPolyline.points;
-//                                List<LatLng> path = PolyUtil.decode(polyline);
-//
-//                                mapController.drawRoute(path);
-//                                mapController.zoomToRoute(path);
-//                            }
-//                        } else {
-//                            Toast.makeText(requireContext(), "Directions API error", Toast.LENGTH_SHORT).show();
-//                        }
-//                    }
-//                    @Override
-//                    public void onFailure(Call<DirectionsResponse> call, Throwable t) {
-//                        Toast.makeText(requireContext(), "Directions request failed: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-//                    }
-//                });
-//    }
     // TimerController callbacks
     @Override
     public void onTimerTick(String formattedTime) {
-        int color = ContextCompat.getColor(requireContext(), R.color.colorError);
+        int color = ContextCompat.getColor(this, R.color.colorError);
         tvTimer.setTextColor(color);
         tvTimer.setText(formattedTime);
     }
@@ -810,64 +714,34 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
         tvTimer.setText("00:00");
     }
     @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        // no menu items here
-        super.onCreateOptionsMenu(menu, inflater);
-    }
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // handle Up arrow
-        if (item.getItemId() == android.R.id.home) {
-            requireActivity().getSupportFragmentManager().popBackStack();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-    @Override
     public void onResume() {
         super.onResume();
         hideTabLayout();
-
-        // Hide bottom navigation
-        MainDrvActivity activity = (MainDrvActivity) getActivity();
-        if (activity != null) {
-            activity.hideBottomNav();
-        }
     }
     @Override
     public void onPause() {
         super.onPause();
         showTabLayout();
-
-        // Show bottom navigation
-        MainDrvActivity activity = (MainDrvActivity) getActivity();
-        if (activity != null) {
-            activity.showBottomNav();
-        }
     }
     private void hideTabLayout() {
-        MainDrvActivity activity = (MainDrvActivity) getActivity();
-        if (activity != null) {
+        if (getParent() instanceof MainDrvActivity) {
+            MainDrvActivity activity = (MainDrvActivity) getParent();
             TabLayout tabLayout = activity.getTabLayout();
-            if (tabLayout != null) {
-                tabLayout.setVisibility(View.GONE);
-            }
+            if (tabLayout != null) tabLayout.setVisibility(View.GONE);
         }
     }
     private void showTabLayout() {
-        MainDrvActivity activity = (MainDrvActivity) getActivity();
-        if (activity != null) {
+        if (getParent() instanceof MainDrvActivity) {
+            MainDrvActivity activity = (MainDrvActivity)  getParent();
             TabLayout tabLayout = activity.getTabLayout();
-            if (tabLayout != null) {
-                tabLayout.setVisibility(View.VISIBLE);
-            }
+            if (tabLayout != null) tabLayout.setVisibility(View.VISIBLE);
         }
     }
     @Override
     public void onStart() {
         super.onStart();
         IntentFilter filter = new IntentFilter(GEOFENCE_BROADCAST_ACTION);
-        ContextCompat.registerReceiver(requireActivity(), geofenceReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED);
+        ContextCompat.registerReceiver(this, geofenceReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED);
         if (appStateManager.isTracking()) {
             startGeofencing();
             startLocationUpdatesForProximity();
@@ -876,13 +750,7 @@ public class ScheduleDetailsFragment extends Fragment implements TimerController
     @Override
     public void onStop() {
         super.onStop();
-        requireActivity().unregisterReceiver(geofenceReceiver);
-        stopGeofencing();
-        stopLocationUpdatesForProximity();
-    }
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
+        unregisterReceiver(geofenceReceiver);
         stopGeofencing();
         stopLocationUpdatesForProximity();
     }

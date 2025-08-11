@@ -7,10 +7,10 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/white"
-    android:paddingTop="40dp"
     android:fitsSystemWindows="true"
     tools:context=".MainDrvActivity">
 
+    <!-- Toolbar -->
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
@@ -24,6 +24,7 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
+            app:title="My Trips"
             app:titleTextAppearance="@style/Toolbar.TitleText"
             app:titleTextColor="?attr/colorOnSurface" />
 
@@ -32,7 +33,6 @@
             android:background="@android:color/white"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:visibility="gone"
             app:tabIndicatorAnimationMode="linear"
             app:tabIndicatorColor="@color/primaryBlue"
             app:tabRippleColor="@android:color/transparent"
@@ -45,27 +45,52 @@
             android:background="?attr/colorOutlineVariant" />
     </com.google.android.material.appbar.AppBarLayout>
 
-    <FrameLayout
-        android:id="@+id/nav_host_fragment"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@id/appBarLayout"
-        app:layout_constraintBottom_toTopOf="@id/nav_view"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/nav_view"
+    <!-- Trip List -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvSchedulesDrv"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/white"
-        app:itemActiveIndicatorStyle="@color/primaryBlue"
-        app:itemBackground="@android:color/transparent"
-        app:itemIconTint="@color/nav_item_color"
-        app:itemTextColor="@color/nav_item_color"
-        app:itemTextAppearanceActive="@style/BottomNavLabelActive"
-        app:itemTextAppearanceInactive="@style/BottomNavLabelInactive"
-        app:labelVisibilityMode="labeled"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:clipToPadding="false"
+        android:paddingBottom="16dp"
+        android:contentDescription="List of routes"
+        app:layout_constraintTop_toBottomOf="@id/appBarLayout"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:menu="@menu/bottom_nav_menu" />
+        tools:listitem="@layout/item_schedule"/>
+
+    <TextView
+        android:id="@+id/tvEmpty"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:textSize="16sp"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:text="No trips available"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+<!--    <com.google.android.material.bottomnavigation.BottomNavigationView-->
+<!--        android:id="@+id/nav_view"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:background="@android:color/white"-->
+<!--        app:itemActiveIndicatorStyle="@color/primaryBlue"-->
+<!--        app:itemBackground="@android:color/transparent"-->
+<!--        app:itemIconTint="@color/nav_item_color"-->
+<!--        app:itemTextColor="@color/nav_item_color"-->
+<!--        app:itemTextAppearanceActive="@style/BottomNavLabelActive"-->
+<!--        app:itemTextAppearanceInactive="@style/BottomNavLabelInactive"-->
+<!--        app:labelVisibilityMode="labeled"-->
+<!--        app:layout_constraintBottom_toBottomOf="parent"-->
+<!--        app:menu="@menu/bottom_nav_menu" />-->
+<!--    <FrameLayout-->
+<!--        android:id="@+id/nav_host_fragment"-->
+<!--        android:layout_width="0dp"-->
+<!--        android:layout_height="0dp"-->
+<!--        app:layout_constraintTop_toBottomOf="@id/appBarLayout"-->
+<!--        app:layout_constraintBottom_toBottomOf="parent"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintEnd_toEndOf="parent" />-->
 </androidx.constraintlayout.widget.ConstraintLayout>

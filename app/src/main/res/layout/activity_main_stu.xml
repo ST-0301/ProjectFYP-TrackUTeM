@@ -18,25 +18,58 @@
         
     <!-- Top Centered Search Bar -->
     <FrameLayout
+        android:id="@+id/searchBarContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="top"
-        android:paddingTop="32dp"
-        android:paddingHorizontal="24dp">
+        android:paddingTop="36dp"
+        android:paddingHorizontal="10dp">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnWhereToGo"
-            style="@style/Widget.Material3.Button.OutlinedButton"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="66dp"
-            android:backgroundTint="@android:color/white"
-            android:gravity="center"
-            android:hint="Where to go?"
-            android:focusable="true"
-            android:clickable="true"
-            android:textColor="@color/black"
-            android:textSize="18sp"
-            app:cornerRadius="16dp"/>
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnWhereToGo"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="325dp"
+                android:layout_height="66dp"
+                android:layout_marginEnd="8dp"
+                android:backgroundTint="@android:color/white"
+                android:gravity="center"
+                android:hint="Where to go?"
+                android:focusable="true"
+                android:clickable="true"
+                android:textColor="@color/black"
+                android:textSize="18sp"
+                app:cornerRadius="16dp"/>
+
+<!--            <com.google.android.material.button.MaterialButton-->
+<!--                android:id="@+id/btnNotifications"-->
+<!--                style="@style/Widget.Material3.Button.IconButton"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="56dp"-->
+<!--                android:backgroundTint="@android:color/white"-->
+<!--                android:paddingHorizontal="10dp"-->
+<!--                app:cornerRadius="16dp"-->
+<!--                app:icon="@drawable/ic_notifications"-->
+<!--                app:iconTint="@color/textSecondary"-->
+<!--                app:tint="?attr/colorOnSurface" />-->
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSettings"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="wrap_content"
+                android:layout_height="56dp"
+                android:backgroundTint="@android:color/white"
+                android:paddingHorizontal="10dp"
+                app:cornerRadius="16dp"
+                app:icon="@drawable/ic_settings"
+                app:iconTint="@color/textSecondary"
+                app:tint="?attr/colorOnSurface"/>
+        </LinearLayout>
     </FrameLayout>
 
     <!-- Draggable Rounded Bottom Sheet -->
@@ -110,4 +143,13 @@
                 android:visibility="gone" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
+
+    <FrameLayout
+        android:id="@+id/fragmentContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/white"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

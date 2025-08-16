@@ -255,9 +255,8 @@ public class ScheduleDetailsActivity extends AppCompatActivity  implements Timer
         stopGeofencing();
         stopLocationUpdatesForProximity();
 
-        // For event type, only record tripEndTime and status
+        // For event type, only record status
         if (currentSchedule != null && "event".equalsIgnoreCase(currentSchedule.getType())) {
-            currentSchedule.setTripEndTime(System.currentTimeMillis());
             currentSchedule.setStatus("completed");
             updateScheduleInFirestore();
         }
@@ -415,14 +414,14 @@ public class ScheduleDetailsActivity extends AppCompatActivity  implements Timer
 
                 if (distanceInMeters <= 5) {
                     long arrivalTime = System.currentTimeMillis();
-                    nextRPoint.setActArrTime(arrivalTime);
+                    nextRPoint.setActTime(arrivalTime);
                     nextRPoint.setStatus("arrived");
 
                     // Calculate lateness
                     int lateness = ScheduleController.calculateLateness(
-                            nextRPoint.getExpArrTime(),
+                            nextRPoint.getPlanTime(),
                             arrivalTime,
-                            currentSchedule.getTripStartTime()
+                            currentSchedule.getScheduledDatetime().getTime()
                     );
                     nextRPoint.setLatenessMinutes(lateness);
 
@@ -430,13 +429,13 @@ public class ScheduleDetailsActivity extends AppCompatActivity  implements Timer
                     int nextIndex = currentRPointIndex + 1;
                     if (nextIndex < currentSchedule.getRPoints().size()) {
                         Schedule.RPointDetail nextRPointDetail = currentSchedule.getRPoints().get(nextIndex);
-                        nextRPointDetail.setActDepTime(System.currentTimeMillis());
+                        nextRPointDetail.setActTime(System.currentTimeMillis());
                         nextRPointDetail.setStatus("departed");
                         currentSchedule.setCurrentRPointIndex(nextIndex);
                     } else {
                         currentSchedule.setCurrentRPointIndex(-1);
                         currentSchedule.setStatus("completed");
-                        currentSchedule.setTripEndTime(System.currentTimeMillis());
+//                        currentSchedule.setTripEndTime(System.currentTimeMillis());
                     }
 
                     // Update Firestore
@@ -481,14 +480,10 @@ public class ScheduleDetailsActivity extends AppCompatActivity  implements Timer
                             for (Schedule.RPointDetail rpoint : currentSchedule.getRPoints()) {
                                 if (rpoint.getStatus() == null)
                                     rpoint.setStatus("scheduled");
-                                if (rpoint.getExpArrTime() == null)
-                                    rpoint.setExpArrTime("");
-                                if (rpoint.getExpDepTime() == null)
-                                    rpoint.setExpDepTime("");
-                                if (rpoint.getActArrTime() == null)
-                                    rpoint.setActArrTime(null);
-                                if (rpoint.getActDepTime() == null)
-                                    rpoint.setActDepTime(null);
+                                if (rpoint.getPlanTime() == null)
+                                    rpoint.setPlanTime("");
+                                if (rpoint.getActTime() == null)
+                                    rpoint.setActTime(null);
                                 // latenessMinutes is int, default 0
                             }
                         }
@@ -542,7 +537,7 @@ public class ScheduleDetailsActivity extends AppCompatActivity  implements Timer
         }
     }
     private void startTrip() {
-        currentSchedule.setTripStartTime(System.currentTimeMillis());
+//        currentSchedule.setTripStartTime(System.currentTimeMillis());
         currentSchedule.setStatus("in_progress");
 
         if (!"event".equalsIgnoreCase(currentSchedule.getType())) {
@@ -551,7 +546,7 @@ public class ScheduleDetailsActivity extends AppCompatActivity  implements Timer
 
             if (!currentSchedule.getRPoints().isEmpty()) {
                 Schedule.RPointDetail firstRPoint = currentSchedule.getRPoints().get(0);
-                firstRPoint.setActDepTime(System.currentTimeMillis());
+                firstRPoint.setActTime(System.currentTimeMillis());
                 firstRPoint.setStatus("departed");
             }
             startGeofencing();

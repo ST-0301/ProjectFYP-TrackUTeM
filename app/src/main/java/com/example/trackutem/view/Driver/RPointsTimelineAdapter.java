@@ -52,7 +52,7 @@ public class RPointsTimelineAdapter extends RecyclerView.Adapter<RPointsTimeline
         if (rpointDetails != null && position < rpointDetails.size()) {
             Schedule.RPointDetail rpoint = rpointDetails.get(position);
 
-            holder.tvExpDepTime.setText(rpoint.getExpDepTime());
+            holder.tvExpDepTime.setText(rpoint.getPlanTime());
 
             boolean showButton = (position == currentRPointIndex && "departed".equals(rpoint.getStatus()) && (currentRPointIndex != -1));
             holder.btnArrival.setVisibility(showButton ? View.VISIBLE : View.GONE);

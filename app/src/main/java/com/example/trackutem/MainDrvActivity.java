@@ -30,6 +30,7 @@ import androidx.lifecycle.Lifecycle;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import java.text.DateFormatSymbols;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -49,6 +50,7 @@ public class MainDrvActivity extends AppCompatActivity {
     private final List<Schedule> todaySchedules = new ArrayList<>();
     private final List<Schedule> upcomingSchedules = new ArrayList<>();
     private final List<Schedule> completedSchedules = new ArrayList<>();
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -166,17 +168,20 @@ public class MainDrvActivity extends AppCompatActivity {
 
         // Get current day
         Calendar calendar = Calendar.getInstance();
-        int currentDayNumber = calendar.get(Calendar.DAY_OF_WEEK);
-        String[] days = new DateFormatSymbols(Locale.ENGLISH).getWeekdays();
-        String currentDayName = days[currentDayNumber].toLowerCase();
+//        int currentDayNumber = calendar.get(Calendar.DAY_OF_WEEK);
+//        String[] days = new DateFormatSymbols(Locale.ENGLISH).getWeekdays();
+//        String currentDayName = days[currentDayNumber].toLowerCase();
+        String currentDate = dateFormat.format(calendar.getTime());
 
         for (Schedule schedule : allSchedules) {
             String status = schedule.getStatus() != null ? schedule.getStatus().toLowerCase(Locale.ENGLISH) : "scheduled";
-            String scheduleDay = (schedule.getDay() != null) ? schedule.getDay().toLowerCase(Locale.ENGLISH) : "";
+//            String scheduleDay = (schedule.getDay() != null) ? schedule.getDay().toLowerCase(Locale.ENGLISH) : "";
+            String scheduleDate = schedule.getScheduledDatetime() != null ?
+                    dateFormat.format(schedule.getScheduledDatetime()) : "";
 
             if (status.equals("completed")) {
                 completedSchedules.add(schedule);
-            } else if (scheduleDay.equals(currentDayName)) {
+            } else if (scheduleDate.equals(currentDate)) {
                 todaySchedules.add(schedule);
             } else {
                 upcomingSchedules.add(schedule);

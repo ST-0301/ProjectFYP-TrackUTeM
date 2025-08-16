@@ -6,14 +6,14 @@ import com.example.trackutem.model.Schedule.RPointDetail;
 import java.util.Calendar;
 
 public class ScheduleController {
-    public static int calculateLateness(String expectedTime, long actualTime, long tripStartTime) {
+    public static int calculateLateness(String planTime, long actualTime, long tripStartTime) {
         try {
             // Create calendar with trip start date
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(tripStartTime);
 
             // Parse expected time (HH:mm)
-            String[] parts = expectedTime.split(":");
+            String[] parts = planTime.split(":");
             int hours = Integer.parseInt(parts[0]);
             int minutes = Integer.parseInt(parts[1]);
 
@@ -35,12 +35,11 @@ public class ScheduleController {
     public static void recordArrivalAndNextDeparture(Schedule schedule, int rpointIndex) {
         if (schedule == null) return;
 
-        // If event type, only update status and tripEndTime if completed
+        // If event type, only update status if completed
         if ("event".equalsIgnoreCase(schedule.getType())) {
             // Mark as completed and set tripEndTime if last point
             if (rpointIndex == schedule.getRPoints().size() - 1) {
                 schedule.setStatus("completed");
-                schedule.setTripEndTime(System.currentTimeMillis());
                 schedule.setCurrentRPointIndex(-1);
                 schedule.updateInFirestore();
             }
@@ -51,11 +50,11 @@ public class ScheduleController {
         // Record current route point arrival
         RPointDetail currentRPoint = schedule.getRPoints().get(rpointIndex);
         long arrivalTime = System.currentTimeMillis();
-        currentRPoint.setActArrTime(arrivalTime);
+        currentRPoint.setActTime(arrivalTime);
         currentRPoint.setStatus("arrived");
 
         // Calculate lateness
-        int lateness = calculateLateness(currentRPoint.getExpArrTime(), arrivalTime, schedule.getTripStartTime());
+        int lateness = calculateLateness(currentRPoint.getPlanTime(), arrivalTime, schedule.getScheduledDatetime().getTime());
         if (lateness > 0) {
             currentRPoint.setLatenessMinutes(lateness);
         } else {
@@ -66,13 +65,12 @@ public class ScheduleController {
         int nextIndex = rpointIndex + 1;
         if (nextIndex < schedule.getRPoints().size()) {
             RPointDetail nextRPoint = schedule.getRPoints().get(nextIndex);
-            nextRPoint.setActDepTime(System.currentTimeMillis());
+            nextRPoint.setActTime(System.currentTimeMillis());
             nextRPoint.setStatus("departed");
             schedule.setCurrentRPointIndex(nextIndex);
         } else {
             schedule.setCurrentRPointIndex(-1);
             schedule.setStatus("completed");
-            schedule.setTripEndTime(System.currentTimeMillis());
         }
         schedule.updateInFirestore();
     }

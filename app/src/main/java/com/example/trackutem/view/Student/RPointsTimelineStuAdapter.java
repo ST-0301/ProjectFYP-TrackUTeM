@@ -35,7 +35,7 @@ public class RPointsTimelineStuAdapter extends RecyclerView.Adapter<RPointsTimel
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Schedule.RPointDetail rpoint = rpoints.get(position);
         holder.tvRPointName.setText(rpointNames.get(position));
-        holder.tvExpDepTime.setText(rpoint.getExpDepTime());
+        holder.tvExpDepTime.setText(rpoint.getPlanTime());
 
         // Set icon based on status
         switch (rpoint.getStatus()) {

@@ -1,44 +1,44 @@
 package com.example.trackutem.model;
 
 import com.google.firebase.database.PropertyName;
-import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.function.Consumer;
 
 public class Schedule {
     private String scheduleId;
-    private String day;
-    private String date;
+//    private String day;
+//    private String date;
+    private Date scheduledDatetime;
     private String type;
-    private String time;
+//    private String time;
+    private String busDriverPairId;
     private String routeId;
     private String driverId;
     private String busId;
     private String status; // "scheduled", "in_progress", "completed"
+//    private long actTripStartTime;
+//    private long tripEndTime;
+    private int queueOpenMinutes;
+    private int queueCloseMinutes;
+    private boolean queueEnabled;
+    private int currentRPointIndex = -1;
     @PropertyName("rpoints")
     private List<RPointDetail> rpoints;
-    private long tripStartTime;
-    private long tripEndTime;
-    private int currentRPointIndex = -1;
 
     public Schedule() {
-        this.day = "";
         this.status = "scheduled";
     }
     public static class RPointDetail {
         @PropertyName("rpointId")
         private String rpointId;
-        private String expArrTime;
-        private String expDepTime;
-        private Long actArrTime;
-        private Long actDepTime;
+        private String planTime;
+        private Long actTime;
         private int latenessMinutes;
         private String status; // "scheduled", "departed", "arrived"
-        private List<String> queuelist;
+        private List<String> queuedStudents;
 
         public RPointDetail() {}
 
@@ -46,22 +46,14 @@ public class Schedule {
         public String getRPointId() { return rpointId; }
         @PropertyName("rpointId")
         public void setRPointId(String rpointId) { this.rpointId = rpointId; }
-        @PropertyName("expArrTime")
-        public String getExpArrTime() { return expArrTime; }
-        @PropertyName("expArrTime")
-        public void setExpArrTime(String expArrTime) { this.expArrTime = expArrTime; }
-        @PropertyName("expDepTime")
-        public String getExpDepTime() { return expDepTime; }
-        @PropertyName("expDepTime")
-        public void setExpDepTime(String expDepTime) { this.expDepTime = expDepTime; }
-        @PropertyName("actArrTime")
-        public Long getActArrTime() { return actArrTime; }
-        @PropertyName("actArrTime")
-        public void setActArrTime(Long actArrTime) { this.actArrTime = actArrTime; }
-        @PropertyName("actDepTime")
-        public Long getActDepTime() { return actDepTime; }
-        @PropertyName("actDepTime")
-        public void setActDepTime(Long actDepTime) { this.actDepTime = actDepTime; }
+        @PropertyName("planTime")
+        public String getPlanTime() { return planTime; }
+        @PropertyName("planTime")
+        public void setPlanTime(String planTime) { this.planTime = planTime; }
+        @PropertyName("actTime")
+        public Long getActTime() { return actTime; }
+        @PropertyName("actTime")
+        public void setActTime(Long actTime) { this.actTime = actTime; }
         @PropertyName("latenessMinutes")
         public int getLatenessMinutes() { return latenessMinutes; }
         @PropertyName("latenessMinutes")
@@ -70,31 +62,27 @@ public class Schedule {
         public String getStatus() { return status; }
         @PropertyName("status")
         public void setStatus(String status) { this.status = status; }
-        @PropertyName("queuelist")
-        public List<String> getQueuelist() { return queuelist; }
-        @PropertyName("queuelist")
-        public void setQueuelist(List<String> queuelist) { this.queuelist = queuelist; }
+        @PropertyName("queuedStudents")
+        public List<String> getQueuedStudents() { return queuedStudents; }
+        @PropertyName("queuedStudents")
+        public void setQueuedStudents(List<String> queuedStudents) { this.queuedStudents = queuedStudents; }
     }
     @PropertyName("scheduleId")
     public String getScheduleId() { return scheduleId; }
     @PropertyName("scheduleId")
     public void setScheduleId(String scheduleId) { this.scheduleId = scheduleId; }
-    @PropertyName("day")
-    public String getDay() { return day; }
-    @PropertyName("day")
-    public void setDay(String day) { this.day = day.toLowerCase(Locale.ENGLISH); }
-    @PropertyName("date")
-    public String getDate() { return date; }
-    @PropertyName("date")
-    public void setDate(String date) { this.date = date; }
+    @PropertyName("scheduledDatetime")
+    public Date getScheduledDatetime() { return scheduledDatetime; }
+    @PropertyName("scheduledDatetime")
+    public void setScheduledDatetime(Date scheduledDatetime) { this.scheduledDatetime = scheduledDatetime; }
     @PropertyName("type")
     public String getType() { return type; }
     @PropertyName("type")
     public void setType(String type) { this.type = type; }
-    @PropertyName("time")
-    public String getTime() { return time; }
-    @PropertyName("time")
-    public void setTime(String time) { this.time = time; }
+    @PropertyName("busDriverPairId")
+    public String getBusDriverPairId() { return busDriverPairId; }
+    @PropertyName("busDriverPairId")
+    public void setBusDriverPairId(String busDriverPairId) { this.busDriverPairId = busDriverPairId; }
     @PropertyName("routeId")
     public String getRouteId() { return routeId; }
     @PropertyName("routeId")
@@ -111,22 +99,30 @@ public class Schedule {
     public String getStatus() { return status; }
     @PropertyName("status")
     public void setStatus(String status) { this.status = status; }
-    @PropertyName("rpoints")
-    public List<RPointDetail> getRPoints() { return rpoints; }
-    @PropertyName("rpoints")
-    public void setRPoints(List<RPointDetail> rpoints) { this.rpoints = rpoints; }
-    @PropertyName("tripStartTime")
-    public long getTripStartTime() { return tripStartTime; }
-    @PropertyName("tripStartTime")
-    public void setTripStartTime(long tripStartTime) { this.tripStartTime = tripStartTime; }
-    @PropertyName("tripEndTime")
-    public long getTripEndTime() { return tripEndTime; }
-    @PropertyName("tripEndTime")
-    public void setTripEndTime(long tripEndTime) { this.tripEndTime = tripEndTime; }
+//    @PropertyName("tripStartTime")
+//    public long getTripStartTime() { return tripStartTime; }
+//    @PropertyName("tripStartTime")
+//    public void setTripStartTime(long tripStartTime) { this.tripStartTime = tripStartTime; }
+    @PropertyName("queueOpenMinutes")
+    public int getQueueOpenMinutes() { return queueOpenMinutes; }
+    @PropertyName("queueOpenMinutes")
+    public void setQueueOpenMinutes(int queueOpenMinutes) { this.queueOpenMinutes = queueOpenMinutes; }
+    @PropertyName("queueCloseMinutes")
+    public int getQueueCloseMinutes() { return queueCloseMinutes; }
+    @PropertyName("queueCloseMinutes")
+    public void setQueueCloseMinutes(int queueCloseMinutes) { this.queueCloseMinutes = queueCloseMinutes; }
+    @PropertyName("queueEnabled")
+    public boolean isQueueEnabled() { return queueEnabled; }
+    @PropertyName("queueEnabled")
+    public void setQueueEnabled(boolean queueEnabled) { this.queueEnabled = queueEnabled; }
     @PropertyName("currentRPointIndex")
     public int getCurrentRPointIndex() { return currentRPointIndex; }
     @PropertyName("currentRPointIndex")
     public void setCurrentRPointIndex(int currentRPointIndex) { this.currentRPointIndex = currentRPointIndex; }
+    @PropertyName("rpoints")
+    public List<RPointDetail> getRPoints() { return rpoints; }
+    @PropertyName("rpoints")
+    public void setRPoints(List<RPointDetail> rpoints) { this.rpoints = rpoints; }
 
     // Interface
     public interface OnSchedulesRetrieved {
@@ -182,11 +178,11 @@ public class Schedule {
                     if (schedule != null && schedule.getRPoints() != null) {
                         for (RPointDetail rPointDetail : schedule.getRPoints()) {
                             if (rPointDetail.getRPointId().equals(rpointId)) {
-                                if (rPointDetail.getQueuelist() == null) {
-                                    rPointDetail.setQueuelist(new ArrayList<>());
+                                if (rPointDetail.getQueuedStudents() == null) {
+                                    rPointDetail.setQueuedStudents(new ArrayList<>());
                                 }
-                                if (!rPointDetail.getQueuelist().contains(studentId)) {
-                                    rPointDetail.getQueuelist().add(studentId);
+                                if (!rPointDetail.getQueuedStudents().contains(studentId)) {
+                                    rPointDetail.getQueuedStudents().add(studentId);
                                     // Update the entire schedule document
                                     FirebaseFirestore.getInstance().collection("schedules").document(this.scheduleId)
                                             .set(schedule)
@@ -215,8 +211,8 @@ public class Schedule {
                     if (schedule != null && schedule.getRPoints() != null) {
                         for (RPointDetail rPointDetail : schedule.getRPoints()) {
                             if (rPointDetail.getRPointId().equals(rpointId)) {
-                                if (rPointDetail.getQueuelist() != null && rPointDetail.getQueuelist().contains(studentId)) {
-                                    rPointDetail.getQueuelist().remove(studentId);
+                                if (rPointDetail.getQueuedStudents() != null && rPointDetail.getQueuedStudents().contains(studentId)) {
+                                    rPointDetail.getQueuedStudents().remove(studentId);
                                     // Update the entire schedule document
                                     FirebaseFirestore.getInstance().collection("schedules").document(this.scheduleId)
                                             .set(schedule)

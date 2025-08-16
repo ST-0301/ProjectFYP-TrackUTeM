@@ -165,13 +165,26 @@ public class ScheduleMapStuActivity extends AppCompatActivity implements OnMapRe
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         FusedLocationProviderClient fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-        mapController = new MapController(this, mMap, fusedLocationClient);
+        mapController = new MapController(this, mMap, fusedLocationClient) {
+            @Override
+            public void initializeMapFeatures() {
+                // Only set up map style and click listener, skip location features
+                setMapStyle();
+                setupMapClickListener();
+            }
+        };
         mapController.initializeMapFeatures();
+        mapController.enableBasicLocationFeatures();
 
         fetchScheduleDetails();
         fetchDriverLocation();
     }
     private void fetchScheduleDetails() {
+        if (scheduleId == null || scheduleId.isEmpty()) {
+            Log.e("ScheduleMap", "Schedule ID is null or empty");
+            return;
+        }
+
         FirebaseFirestore.getInstance().collection("schedules").document(scheduleId)
                 .addSnapshotListener((documentSnapshot, e) -> {
                     if (e != null) {
@@ -311,36 +324,60 @@ public class ScheduleMapStuActivity extends AppCompatActivity implements OnMapRe
 
     private void fetchDriverLocation() {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        DocumentReference driverRef = db.collection("drivers").document(driverId);
-        driverRef.addSnapshotListener((snapshot, error) -> {
-            if (snapshot != null && snapshot.exists()) {
-                String currentScheduleId = snapshot.getString("currentScheduleId");
-                String status = snapshot.getString("status");
 
-                if ("on_duty".equals(status) && scheduleId.equals(currentScheduleId)) {
-                    GeoPoint geoPoint = snapshot.getGeoPoint("currentLocation");
-                    if (geoPoint != null) {
-                        LatLng latLng = new LatLng(geoPoint.getLatitude(), geoPoint.getLongitude());
+        // First get the busDriverPairId from schedule
+        db.collection("schedules").document(scheduleId)
+                .get()
+                .addOnSuccessListener(scheduleSnapshot -> {
+                    if (scheduleSnapshot.exists()) {
+                        String busDriverPairId = scheduleSnapshot.getString("busDriverPairId");
+                        if (busDriverPairId != null) {
+                            // Then get driverId from busDriverPairings
+                            db.collection("busDriverPairings").document(busDriverPairId)
+                                    .addSnapshotListener((pairingSnapshot, error) -> {
+                                        if (pairingSnapshot != null && pairingSnapshot.exists()) {
+                                            String driverId = pairingSnapshot.getString("driverId");
+                                            if (driverId != null) {
+                                                // Now fetch driver location
+                                                db.collection("drivers").document(driverId)
+                                                        .addSnapshotListener((driverSnapshot, driverError) -> {
+                                                            if (driverSnapshot != null && driverSnapshot.exists()) {
+                                                                String currentScheduleId = driverSnapshot.getString("currentScheduleId");
+                                                                String status = driverSnapshot.getString("status");
 
-                        if (busLocationMarker != null) {
-                            busLocationMarker.remove();
+                                                                if ("on_duty".equals(status) && scheduleId.equals(currentScheduleId)) {
+                                                                    GeoPoint geoPoint = driverSnapshot.getGeoPoint("currentLocation");
+                                                                    if (geoPoint != null) {
+                                                                        LatLng latLng = new LatLng(geoPoint.getLatitude(), geoPoint.getLongitude());
+
+                                                                        if (busLocationMarker != null) {
+                                                                            busLocationMarker.remove();
+                                                                        }
+
+                                                                        busLocationMarker = mMap.addMarker(new MarkerOptions()
+                                                                                .position(latLng)
+                                                                                .title("Bus Location")
+                                                                                .icon(mapController.getBusLocationIcon()));
+                                                                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16));
+                                                                    }
+                                                                } else {
+                                                                    tvQueuePrompt.setText("Bus not started yet!");
+                                                                    isQueued = false;
+                                                                    updateQueueButtonsVisibility();
+                                                                    updateRPointsAdapter();
+                                                                    if (busLocationMarker != null) {
+                                                                        busLocationMarker.remove();
+                                                                        busLocationMarker = null;
+                                                                    }
+                                                                }
+                                                            }
+                                                        });
+                                            }
+                                        }
+                                    });
                         }
-
-                        busLocationMarker = mMap.addMarker(new MarkerOptions().position(latLng).title("Bus Location").icon(mapController.getBusLocationIcon()));
-                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16));
                     }
-                } else {
-                    tvQueuePrompt.setText("Bus not started yet!");
-                    isQueued = false;
-                    updateQueueButtonsVisibility();
-                    updateRPointsAdapter();
-                    if (busLocationMarker != null) {
-                        busLocationMarker.remove();
-                        busLocationMarker = null;
-                    }
-                }
-            }
-        });
+                });
     }
     private void checkIfAlreadyQueued() {
         if (studentId == null) {
@@ -357,7 +394,7 @@ public class ScheduleMapStuActivity extends AppCompatActivity implements OnMapRe
                         if (schedule != null && schedule.getRPoints() != null) {
                             boolean foundInQueue = false;
                             for (Schedule.RPointDetail rPointDetail : schedule.getRPoints()) {
-                                if (rPointDetail.getQueuelist() != null && rPointDetail.getQueuelist().contains(studentId)) {
+                                    if (rPointDetail.getQueuedStudents() != null && rPointDetail.getQueuedStudents().contains(studentId)) {
                                     foundInQueue = true;
                                     selectedRPointIdToQueue = rPointDetail.getRPointId();
                                     new RoutePoint().getRPointNameById(selectedRPointIdToQueue, new RoutePoint.RPointCallback() {

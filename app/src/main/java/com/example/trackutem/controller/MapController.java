@@ -71,6 +71,7 @@ public class MapController {
 
     // Public Methods
     public void initializeMapFeatures() {
+//        enableBasicLocationFeatures();
         enableUserLocation();
         setMapStyle();
         setupMapClickListener();
@@ -195,14 +196,20 @@ public class MapController {
     }
 
     // Location & Map Setup
-    private void enableUserLocation() {
+    public void enableBasicLocationFeatures() {
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        mMap.setMyLocationEnabled(true);
+    }
+    protected void enableUserLocation() {
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
         mMap.setMyLocationEnabled(true);
         setupInitialLocation();
     }
-    private void setupInitialLocation() {
+    protected void setupInitialLocation() {
         LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000)
                 .setMinUpdateIntervalMillis(5000)
                 .setMaxUpdates(1)
@@ -237,7 +244,7 @@ public class MapController {
             Log.e("LocationError", "SecurityException in location updates: " + e.getMessage());
         }
     }
-    private void setMapStyle() {
+    protected void setMapStyle() {
         try {
             boolean success = mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style));
             if (!success) {
@@ -250,7 +257,7 @@ public class MapController {
 
     // Marker & Interaction
     @SuppressLint("PotentialBehaviorOverride")
-    private void setupMapClickListener() {
+    protected void setupMapClickListener() {
         mMap.setOnMarkerClickListener(marker -> {
             Object tag = marker.getTag();
             if (tag != null && tag instanceof RoutePoint) {

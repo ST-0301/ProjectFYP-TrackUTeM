@@ -13,7 +13,9 @@ import com.example.trackutem.model.Route;
 import com.example.trackutem.model.Schedule;
 import com.google.android.material.chip.Chip;
 import java.lang.ref.WeakReference;
+import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.Locale;
 
 public class ScheduleStuAdapter extends RecyclerView.Adapter<ScheduleStuAdapter.ViewHolder> {
     private List<Schedule> schedules;
@@ -39,17 +41,22 @@ public class ScheduleStuAdapter extends RecyclerView.Adapter<ScheduleStuAdapter.
         Schedule schedule = schedules.get(position);
 
         // Find expDepTime for the selected fromRPointId
-        String expDepTime = null;
-        if (fromRPointId != null && schedule.getRPoints() != null) {
-            for (Schedule.RPointDetail rpd : schedule.getRPoints()) {
-                if (fromRPointId.equals(rpd.getRPointId())) {
-                    expDepTime = rpd.getExpDepTime();
-                    break;
-                }
-            }
-        }
-        holder.tvTime.setText(expDepTime != null && !expDepTime.isEmpty() ? expDepTime : schedule.getTime());
+//        String expDepTime = null;
+//        if (fromRPointId != null && schedule.getRPoints() != null) {
+//            for (Schedule.RPointDetail rpd : schedule.getRPoints()) {
+//                if (fromRPointId.equals(rpd.getRPointId())) {
+//                    expDepTime = rpd.getExpDepTime();
+//                    break;
+//                }
+//            }
+//        }
+//        holder.tvTime.setText(expDepTime != null && !expDepTime.isEmpty() ? expDepTime : schedule.getTime());
         // holder.tvTime.setText(schedule.getTime());
+
+        // Format time
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+        String timeText = timeFormat.format(schedule.getScheduledDatetime());
+        holder.tvTime.setText(timeText);
 
         holder.chipStatus.setText(schedule.getStatus().toUpperCase());
         int statusColor = getStatusColor(schedule.getStatus());

@@ -21,7 +21,9 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
+            style="@style/Widget.Material3.Toolbar"
             app:title="Schedule"
+            app:titleCentered="true"
             app:titleTextAppearance="@style/Toolbar.TitleText"
             app:titleTextColor="?attr/colorOnSurface" />
 
@@ -37,11 +39,15 @@
         android:layout_height="0dp"
         android:layout_marginTop="16dp"
         android:clipToPadding="false"
-        android:contentDescription="List of schedules"
+        android:contentDescription="List of schedules grouped by date"
         android:paddingBottom="16dp"
+        android:paddingVertical="8dp"
+        android:paddingHorizontal="8dp"
+        android:scrollbars="none"
+        tools:listitem="@layout/item_schedule_stu"
         app:layout_constraintTop_toBottomOf="@id/appBarLayout"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        tools:listitem="@layout/item_schedule_stu"/>
+        app:layout_constraintEnd_toEndOf="parent"/>
+<!--        tools:listitem="@layout/item_schedule_stu"-->
 </androidx.constraintlayout.widget.ConstraintLayout>

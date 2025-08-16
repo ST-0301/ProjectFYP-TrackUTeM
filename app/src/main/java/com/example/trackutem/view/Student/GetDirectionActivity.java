@@ -274,11 +274,14 @@ public class GetDirectionActivity extends AppCompatActivity {
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.DAY_OF_YEAR, tabPosition);
 
-        String dayName = new SimpleDateFormat("EEEE", Locale.ENGLISH).format(cal.getTime()).toLowerCase();
+//        String dayName = new SimpleDateFormat("EEEE", Locale.ENGLISH).format(cal.getTime()).toLowerCase();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
+        String targetDate = dateFormat.format(cal.getTime());
 
         List<Schedule> filtered = new ArrayList<>();
         for (Schedule schedule : matchingSchedules) {
-            if (schedule.getDay().equals(dayName)) {
+            String scheduleDate = dateFormat.format(schedule.getScheduledDatetime());
+            if (scheduleDate.equals(targetDate)) {
                 filtered.add(schedule);
             }
         }

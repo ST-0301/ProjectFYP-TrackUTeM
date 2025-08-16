@@ -10,7 +10,9 @@ import com.example.trackutem.R;
 import com.example.trackutem.model.Route;
 import com.example.trackutem.model.Schedule;
 import com.google.android.material.chip.Chip;
+import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.Locale;
 
 public class ScheduleAdapter extends RecyclerView.Adapter<ScheduleAdapter.ScheduleViewHolder> {
     private List<Schedule> schedules;
@@ -34,30 +36,41 @@ public class ScheduleAdapter extends RecyclerView.Adapter<ScheduleAdapter.Schedu
     public void onBindViewHolder(@NonNull ScheduleViewHolder holder, int position) {
         Schedule schedule = schedules.get(position);
 
-        String day = schedule.getDay();
-        String chipDayText = "";
-        if (day != null && !day.isEmpty()) {
-            String formattedDay = day.substring(0, 1).toUpperCase() + day.substring(1);
+//        String day = schedule.getDay();
+//        String chipDayText = "";
+//        if (day != null && !day.isEmpty()) {
+//            String formattedDay = day.substring(0, 1).toUpperCase() + day.substring(1);
+//
+//            String type = schedule.getType() != null ? schedule.getType() : "";
+//            String date = null;
+//            try {
+//                java.lang.reflect.Method getDateMethod = schedule.getClass().getMethod("getDate");
+//                date = (String) getDateMethod.invoke(schedule);
+//            } catch (Exception ignored) {
+//            }
+//
+//            if ("event".equalsIgnoreCase(type) && date != null && !date.isEmpty()) {
+//                chipDayText = formattedDay + " " + date;
+//            } else {
+//                chipDayText = formattedDay;
+//            }
+//            holder.chipDay.setText(chipDayText);
+//            holder.chipDay.setVisibility(View.VISIBLE);
+//        } else {
+//            holder.chipDay.setVisibility(View.GONE);
+//        }
+//        holder.tvTime.setText(schedule.getTime() != null ? schedule.getTime() : "");
 
-            String type = schedule.getType() != null ? schedule.getType() : "";
-            String date = null;
-            try {
-                java.lang.reflect.Method getDateMethod = schedule.getClass().getMethod("getDate");
-                date = (String) getDateMethod.invoke(schedule);
-            } catch (Exception ignored) {
-            }
+        // Format time
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+        String timeText = timeFormat.format(schedule.getScheduledDatetime());
+        holder.tvTime.setText(timeText);
 
-            if ("event".equalsIgnoreCase(type) && date != null && !date.isEmpty()) {
-                chipDayText = formattedDay + " " + date;
-            } else {
-                chipDayText = formattedDay;
-            }
-            holder.chipDay.setText(chipDayText);
-            holder.chipDay.setVisibility(View.VISIBLE);
-        } else {
-            holder.chipDay.setVisibility(View.GONE);
-        }
-        holder.tvTime.setText(schedule.getTime() != null ? schedule.getTime() : "");
+        // Format day
+        SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE", Locale.getDefault());
+        String dayName = dayFormat.format(schedule.getScheduledDatetime());
+        holder.chipDay.setText(dayName);
+        holder.chipDay.setVisibility(View.VISIBLE);
 
         String type = schedule.getType() != null ? schedule.getType() : "";
         if (!type.isEmpty()) {

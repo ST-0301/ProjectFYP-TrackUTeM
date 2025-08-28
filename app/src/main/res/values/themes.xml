@@ -17,18 +17,15 @@
         <!-- Error Color -->
         <item name="colorError">@color/colorError</item>
 
-        <!-- Fonts -->
-        <item name="fontFamily">@font/poppins_font</item>
-        <item name="android:fontFamily">@font/poppins_font</item>
-
         <!-- Status Bar -->
-        <item name="android:statusBarColor">@android:color/white</item>
+        <item name="android:statusBarColor">@color/white</item>
         <item name="android:windowLightStatusBar">true</item>
 
         <!-- Navigation Bar -->
-        <item name="android:navigationBarColor">@android:color/white</item>
+        <item name="android:navigationBarColor">@color/white</item>
         <item name="android:windowLightNavigationBar" tools:targetApi="27">true</item>
         <item name="android:windowTranslucentNavigation">false</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+
     </style>
 </resources>

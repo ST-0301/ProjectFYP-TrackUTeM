@@ -1,19 +1,19 @@
 package com.example.trackutem.controller;
 
 import android.content.Context;
-import com.example.trackutem.model.DatabaseHelper;
+import com.example.trackutem.model.UserRepository;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 public class RegisterStuController {
     private final Context context;
     private final FirebaseAuth mAuth;
-    private final DatabaseHelper dbHelper;
+    private final UserRepository dbHelper;
 
     public RegisterStuController(Context context) {
         this.context = context;
         this.mAuth = FirebaseAuth.getInstance();
-        this.dbHelper = new DatabaseHelper();
+        this.dbHelper = new UserRepository();
     }
 
     // Method to validate email format (using regex)
@@ -25,7 +25,7 @@ public class RegisterStuController {
         String passwordRegex = "^(?=.*[A-Za-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?#^;:,./])[A-Za-z\\d@$!%*?#^;:,./]{8,}$";
         return password.matches(passwordRegex);
     }
-    public void checkEmailAvailability(String email, DatabaseHelper.onEmailCheckedListener listener) {
+    public void checkEmailAvailability(String email, UserRepository.onEmailCheckedListener listener) {
         dbHelper.checkEmailExists(email, listener);
     }
 

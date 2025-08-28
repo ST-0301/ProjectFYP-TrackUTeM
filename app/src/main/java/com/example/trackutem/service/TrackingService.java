@@ -14,6 +14,8 @@ import android.os.Looper;
 import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
+
 import com.example.trackutem.controller.TrackingController;
 import com.example.trackutem.model.RoutePoint;
 import com.example.trackutem.utils.NotificationHelper;
@@ -33,6 +35,7 @@ public class TrackingService extends Service {
     private TrackingController trackingController;
     private FusedLocationProviderClient fusedLocationClient;
     private LocationCallback locationCallback;
+    private boolean isTracking = false;
 
     @Override
     public void onCreate() {
@@ -53,9 +56,20 @@ public class TrackingService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "onStartCommand called with action: " + (intent != null ? intent.getAction() : "null"));
-        if (intent != null && ScheduleDetailsActivity.GEOFENCE_BROADCAST_ACTION.equals(intent.getAction())) {
-            handleGeofenceTransition(intent);
-        } else {
+
+        if (intent != null) {
+            String action = intent.getAction();
+            if ("STOP_TRACKING".equals(action)) {
+                stopLocationUpdates();
+                stopForeground(true);
+                stopSelf();
+                return START_NOT_STICKY;
+            } else if (ScheduleDetailsActivity.GEOFENCE_BROADCAST_ACTION.equals(action)) {
+                handleGeofenceTransition(intent);
+            } else if (!isTracking) {
+                startLocationUpdates();
+            }
+        } else if (!isTracking) {
             startLocationUpdates();
         }
         return START_STICKY;
@@ -93,7 +107,6 @@ public class TrackingService extends Service {
                         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
                         notificationManager.notify(2, notification);
                     }
-
                     @Override
                     public void onError(Exception e) {
                         Log.e(TAG, "Error getting route point name for geofence: " + e.getMessage());
@@ -102,14 +115,19 @@ public class TrackingService extends Service {
             }
         }
     }
+    private void stopLocationUpdates() {
+        if (locationCallback != null) {
+            fusedLocationClient.removeLocationUpdates(locationCallback);
+            locationCallback = null;
+            isTracking = false;
+            Log.d(TAG, "Location updates stopped");
+        }
+    }
     @Override
     public void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "Service destroyed, tracking stopped");
-
-        if (locationCallback != null) {
-            fusedLocationClient.removeLocationUpdates(locationCallback);
-        }
+        stopLocationUpdates();
     }
 
     @Nullable
@@ -120,10 +138,16 @@ public class TrackingService extends Service {
 
     @SuppressLint("MissingPermission")
     private void startLocationUpdates() {
-        LocationRequest locationRequest = LocationRequest.create()
-                .setInterval(10000)
-                .setFastestInterval(5000)
-                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+                != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            Log.w(TAG, "Location permission not granted. Cannot start tracking.");
+            return;
+        }
+
+        LocationRequest locationRequest = new LocationRequest.Builder(10000)
+                .setMinUpdateIntervalMillis(5000)
+                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                .build();
 
         locationCallback = new LocationCallback() {
             @Override
@@ -139,5 +163,11 @@ public class TrackingService extends Service {
             }
         };
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
+        isTracking = true;
+
+        NotificationHelper notificationHelper = new NotificationHelper(this);
+        startForeground(1, notificationHelper.buildForegroundTrackingNotification());
+
+        Log.d(TAG, "Location updates started");
     }
 }

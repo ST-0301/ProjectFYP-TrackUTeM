@@ -6,11 +6,11 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
 
-public class DatabaseHelper {
+public class UserRepository {
     private static final String TAG = "DatabaseHelper";
     private final FirebaseFirestore db;
 
-    public DatabaseHelper() {
+    public UserRepository() {
         db = FirebaseFirestore.getInstance();
     }
 

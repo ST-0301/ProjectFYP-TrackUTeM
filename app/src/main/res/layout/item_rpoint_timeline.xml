@@ -18,7 +18,7 @@
         app:cardElevation="2dp"
         app:strokeColor="@color/primaryBlue"
         app:strokeWidth="2dp"
-        app:cardBackgroundColor="@android:color/white"
+        app:cardBackgroundColor="@color/white"
         app:layout_constraintStart_toStartOf="@id/guideline"
         app:layout_constraintBottom_toBottomOf="@id/tvRPointName">
 
@@ -34,13 +34,13 @@
     <!-- Route Point Name -->
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/tvRPointName"
+        style="@style/TextAppearance.Body.Large"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:contentDescription="Route Point: %1$s"
         android:lineSpacingExtra="4dp"
-        android:textColor="?attr/colorOnSurface"
-        android:textSize="16sp"
+        android:text="Stop Name"
         app:layout_constraintStart_toEndOf="@id/indicatorCard"
         app:layout_constraintTop_toTopOf="@id/indicatorCard"
         app:layout_constraintEnd_toStartOf="@id/btnArrival"
@@ -48,13 +48,12 @@
 
     <!-- Expected Departure Time -->
     <TextView
-        android:id="@+id/tvExpDepTime"
+        android:id="@+id/tvPlanTime"
+        style="@style/TextAppearance.Body.Secondary"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:text="00:00"
-        android:textSize="14sp"
-        android:textColor="@color/textSecondary"
+        android:text="08:00"
         app:layout_constraintStart_toEndOf="@id/indicatorCard"
         app:layout_constraintTop_toBottomOf="@id/tvRPointName"
         app:layout_constraintBottom_toTopOf="@+id/barrier"
@@ -63,15 +62,15 @@
     <!-- Lateness Indicator -->
     <TextView
         android:id="@+id/tvLateness"
+        style="@style/TextAppearance.Body.Secondary"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:text="+0 min"
-        android:textSize="12sp"
+        android:text="+12 min"
         android:textColor="@color/colorError"
-        app:layout_constraintStart_toEndOf="@id/tvExpDepTime"
-        app:layout_constraintTop_toTopOf="@+id/tvExpDepTime"
-        app:layout_constraintBottom_toBottomOf="@+id/tvExpDepTime"/>
+        app:layout_constraintStart_toEndOf="@id/tvPlanTime"
+        app:layout_constraintTop_toTopOf="@+id/tvPlanTime"
+        app:layout_constraintBottom_toBottomOf="@+id/tvPlanTime"/>
 
     <!-- Barrier to handle dynamic content -->
     <androidx.constraintlayout.widget.Barrier
@@ -79,8 +78,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:barrierDirection="bottom"
-        app:constraint_referenced_ids="tvRPointName,tvExpDepTime,tvLateness"
-        app:layout_constraintTop_toBottomOf="@id/tvExpDepTime"/>
+        app:constraint_referenced_ids="tvRPointName,tvPlanTime,tvLateness"
+        app:layout_constraintTop_toBottomOf="@id/tvPlanTime"/>
 
     <!-- Arrival Button -->
     <Button

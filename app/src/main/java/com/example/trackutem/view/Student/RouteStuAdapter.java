@@ -1,4 +1,4 @@
-package com.example.trackutem.view;
+package com.example.trackutem.view.Student;
 
 import android.content.Context;
 import android.content.Intent;
@@ -10,10 +10,10 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.trackutem.R;
 import com.example.trackutem.model.Route;
-import com.example.trackutem.view.Student.RouteScheduleActivity;
+
 import java.util.List;
 
-public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.ViewHolder> {
+public class RouteStuAdapter extends RecyclerView.Adapter<RouteStuAdapter.ViewHolder> {
     private List<Route> routes;
     private OnRouteClickListener listener;
     private Context context;
@@ -21,7 +21,7 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.ViewHolder> 
     public interface OnRouteClickListener {
         void onRouteClick(Route route);
     }
-    public RouteAdapter(List<Route> routes, OnRouteClickListener listener) {
+    public RouteStuAdapter(List<Route> routes, OnRouteClickListener listener) {
         this.routes = routes;
         this.listener = listener;
     }
@@ -30,7 +30,7 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.ViewHolder> 
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         context = parent.getContext();
         View view = LayoutInflater.from(context)
-                .inflate(R.layout.item_route_card, parent, false);
+                .inflate(R.layout.item_route_card_stu, parent, false);
         return new ViewHolder(view);
     }
     @Override
@@ -38,8 +38,8 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.ViewHolder> 
         Route route = routes.get(position);
         holder.tvRouteName.setText(route.getName());
         holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(context, RouteScheduleActivity.class);
-            intent.putExtra(RouteScheduleActivity.EXTRA_ROUTE_ID, route.getRouteId());
+            Intent intent = new Intent(context, RouteScheduleStuActivity.class);
+            intent.putExtra(RouteScheduleStuActivity.EXTRA_ROUTE_ID, route.getRouteId());
             context.startActivity(intent);
         });
     }

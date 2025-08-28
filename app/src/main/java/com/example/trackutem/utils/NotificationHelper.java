@@ -7,24 +7,24 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.util.Log;
 import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
+
+import com.example.trackutem.MainDrvActivity;
+import com.example.trackutem.MainStuActivity;
 import com.example.trackutem.R;
 import com.example.trackutem.view.Driver.ScheduleDetailsActivity;
+import com.example.trackutem.view.LoginActivity;
 
 public class NotificationHelper {
     private static final String TAG = "NotificationHelper";
-    private static final String CHANNEL_ID_WARNING = "TRACKUTEM_TIMER_WARNING";
-    private static final String CHANNEL_ID_FINISH = "TRACKUTEM_TIMER_FINISH";
     private static final String CHANNEL_ID_FOREGROUND = "TRACKUTEM_FOREGROUND";
     private static final String CHANNEL_ID_GEOFENCE = "TRACKUTEM_GEOFENCE";
-    private static final String CHANNEL_ID_PUSH = "TRACKUTEM_PUSH";
-    private static final int NOTIFICATION_ID_WARNING = 100;
-    private static final int NOTIFICATION_ID_FINISH = 101;
+    private static final String CHANNEL_ID_BUS_DELAY = "TRACKUTEM_BUS_DELAY";
     private final Context context;
     private final NotificationManager notificationManager;
 
@@ -36,18 +36,6 @@ public class NotificationHelper {
 
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // Warning channel
-            NotificationChannel warningChannel = new NotificationChannel(
-                    CHANNEL_ID_WARNING,
-                    "Timer Warnings",
-                    NotificationManager.IMPORTANCE_HIGH);
-
-            // Finish channel
-            NotificationChannel finishChannel = new NotificationChannel(
-                    CHANNEL_ID_FINISH,
-                    "Timer Finish Alerts",
-                    NotificationManager.IMPORTANCE_HIGH);
-
             // Foreground channel
             NotificationChannel foregroundChannel = new NotificationChannel(
                     CHANNEL_ID_FOREGROUND,
@@ -60,42 +48,18 @@ public class NotificationHelper {
                     "Geofence Alerts",
                     NotificationManager.IMPORTANCE_HIGH);
 
+            // Delay channel
+            NotificationChannel busDelayChannel = new NotificationChannel(
+                    CHANNEL_ID_BUS_DELAY,
+                    "Bus Delay Alerts",
+                    NotificationManager.IMPORTANCE_HIGH);
 
-            notificationManager.createNotificationChannel(warningChannel);
-            notificationManager.createNotificationChannel(finishChannel);
             notificationManager.createNotificationChannel(foregroundChannel);
             notificationManager.createNotificationChannel(geofenceChannel);
+            notificationManager.createNotificationChannel(busDelayChannel);
         }
     }
 
-    public void showTimerNotification(String message, boolean isFinalAlert) {
-        // Check for POST_NOTIFICATIONS permission (Android 13+)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
-                        != PackageManager.PERMISSION_GRANTED) {
-            Log.w(TAG, "Notification permission not granted");
-            return;
-        }
-
-        // Open app when notification is tapped
-        Intent intent = new Intent(context, ScheduleDetailsActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
-
-        // Notification
-        String channelId = isFinalAlert ? CHANNEL_ID_FINISH : CHANNEL_ID_WARNING;
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channelId)
-                .setSmallIcon(R.drawable.ic_notifications)
-                .setContentTitle("TrackUTeM Driver Alert")
-                .setContentText(message)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setContentIntent(pendingIntent)
-                .setAutoCancel(true);
-
-        // Show notification
-        int notificationId = isFinalAlert ? NOTIFICATION_ID_FINISH : NOTIFICATION_ID_WARNING;
-        notificationManager.notify(notificationId, builder.build());
-    }
     public Notification buildForegroundTrackingNotification() {
         Intent intent = new Intent(context, ScheduleDetailsActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
@@ -125,14 +89,46 @@ public class NotificationHelper {
                 .build();
     }
 
-    public void showPushNotification(String title, String message) {
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID_PUSH)
+    public void showDelayNotification(String title, String message) {
+        SharedPreferences prefs = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
+        String driverId = prefs.getString("driverId", null);
+        String studentId = prefs.getString("studentId", null);
+
+        Intent intent;
+        if (driverId != null) {
+            intent = new Intent(context, MainDrvActivity.class);
+            intent.putExtra("openFragment", "notifications");
+        } else if (studentId != null) {
+            intent = new Intent(context, MainStuActivity.class);
+        } else {
+            intent = new Intent(context, LoginActivity.class);
+        }
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+        showDefaultNotification(title, message, intent);
+    }
+
+    public void showDefaultNotification(String title, String message, Intent intent) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+                        != PackageManager.PERMISSION_GRANTED) {
+            Log.w(TAG, "Notification permission not granted");
+            return;
+        }
+
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID_BUS_DELAY)
                 .setSmallIcon(R.drawable.ic_notifications)
                 .setContentTitle(title)
                 .setContentText(message)
-                .setPriority(NotificationCompat.PRIORITY_HIGH);
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setCategory(NotificationCompat.CATEGORY_ALARM);
 
-        NotificationManagerCompat manager = NotificationManagerCompat.from(context);
-        manager.notify((int) System.currentTimeMillis(), builder.build());
+        notificationManager.notify((int) System.currentTimeMillis(), builder.build());
     }
 }

@@ -71,6 +71,10 @@ public class RoutePoint {
                 .addOnFailureListener(callback::onError);
     }
     public void getRPointNameById(String rpointId, RPointCallback callback) {
+        if (rpointId == null) {
+            callback.onError(new Exception("Route Point ID is null"));
+            return;
+        }
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("routePoints")
                 .document(rpointId)

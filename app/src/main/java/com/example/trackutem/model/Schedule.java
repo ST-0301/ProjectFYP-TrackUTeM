@@ -1,26 +1,22 @@
 package com.example.trackutem.model;
 
+import com.google.firebase.firestore.Exclude;
 import com.google.firebase.database.PropertyName;
 import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 public class Schedule {
     private String scheduleId;
-//    private String day;
-//    private String date;
     private Date scheduledDatetime;
     private String type;
-//    private String time;
     private String busDriverPairId;
     private String routeId;
-    private String driverId;
-    private String busId;
-    private String status; // "scheduled", "in_progress", "completed"
-//    private long actTripStartTime;
-//    private long tripEndTime;
+    private String status;
     private int queueOpenMinutes;
     private int queueCloseMinutes;
     private boolean queueEnabled;
@@ -28,43 +24,43 @@ public class Schedule {
     @PropertyName("rpoints")
     private List<RPointDetail> rpoints;
 
+    private String preloadedRouteName;
+    private String preloadedBusPlate;
+
     public Schedule() {
         this.status = "scheduled";
     }
     public static class RPointDetail {
-        @PropertyName("rpointId")
         private String rpointId;
         private String planTime;
         private Long actTime;
         private int latenessMinutes;
-        private String status; // "scheduled", "departed", "arrived"
-        private List<String> queuedStudents;
+        private String status;
+        private List<String> queuedStudents = new ArrayList<>();
 
         public RPointDetail() {}
 
-        @PropertyName("rpointId")
-        public String getRPointId() { return rpointId; }
-        @PropertyName("rpointId")
-        public void setRPointId(String rpointId) { this.rpointId = rpointId; }
-        @PropertyName("planTime")
+        public String getRpointId() { return rpointId; }
+        public void setRpointId(String rpointId) { this.rpointId = rpointId; }
+
         public String getPlanTime() { return planTime; }
-        @PropertyName("planTime")
         public void setPlanTime(String planTime) { this.planTime = planTime; }
-        @PropertyName("actTime")
+
         public Long getActTime() { return actTime; }
-        @PropertyName("actTime")
         public void setActTime(Long actTime) { this.actTime = actTime; }
-        @PropertyName("latenessMinutes")
+
         public int getLatenessMinutes() { return latenessMinutes; }
-        @PropertyName("latenessMinutes")
         public void setLatenessMinutes(int latenessMinutes) { this.latenessMinutes = latenessMinutes; }
-        @PropertyName("status")
+
         public String getStatus() { return status; }
-        @PropertyName("status")
         public void setStatus(String status) { this.status = status; }
-        @PropertyName("queuedStudents")
-        public List<String> getQueuedStudents() { return queuedStudents; }
-        @PropertyName("queuedStudents")
+
+        public List<String> getQueuedStudents() {
+            if (queuedStudents == null) {
+                queuedStudents = new ArrayList<>();
+            }
+            return queuedStudents;
+        }
         public void setQueuedStudents(List<String> queuedStudents) { this.queuedStudents = queuedStudents; }
     }
     @PropertyName("scheduleId")
@@ -87,22 +83,10 @@ public class Schedule {
     public String getRouteId() { return routeId; }
     @PropertyName("routeId")
     public void setRouteId(String routeId) { this.routeId = routeId; }
-    @PropertyName("driverId")
-    public String getDriverId() { return driverId; }
-    @PropertyName("driverId")
-    public void setDriverId(String driverId) { this.driverId = driverId; }
-    @PropertyName("busId")
-    public String getBusId() { return busId; }
-    @PropertyName("busId")
-    public void setBusId(String busId) { this.busId = busId; }
     @PropertyName("status")
     public String getStatus() { return status; }
     @PropertyName("status")
     public void setStatus(String status) { this.status = status; }
-//    @PropertyName("tripStartTime")
-//    public long getTripStartTime() { return tripStartTime; }
-//    @PropertyName("tripStartTime")
-//    public void setTripStartTime(long tripStartTime) { this.tripStartTime = tripStartTime; }
     @PropertyName("queueOpenMinutes")
     public int getQueueOpenMinutes() { return queueOpenMinutes; }
     @PropertyName("queueOpenMinutes")
@@ -124,6 +108,13 @@ public class Schedule {
     @PropertyName("rpoints")
     public void setRPoints(List<RPointDetail> rpoints) { this.rpoints = rpoints; }
 
+    @Exclude
+    public String getPreloadedRouteName() { return preloadedRouteName; }
+    public void setPreloadedRouteName(String preloadedRouteName) { this.preloadedRouteName = preloadedRouteName; }
+    @Exclude
+    public String getPreloadedBusPlate() { return preloadedBusPlate; }
+    public void setPreloadedBusPlate(String preloadedBusPlate) { this.preloadedBusPlate = preloadedBusPlate; }
+
     // Interface
     public interface OnSchedulesRetrieved {
         void onSuccess(List<Schedule> schedules);
@@ -137,6 +128,21 @@ public class Schedule {
                 .document(scheduleId)
                 .set(this);
     }
+    public void updateRPointFields(int rpointIndex, Map<String, Object> updates) {
+        String basePath = "rpoints." + rpointIndex;
+        Map<String, Object> updateData = new HashMap<>();
+        for (Map.Entry<String, Object> entry : updates.entrySet()) {
+            updateData.put(basePath + "." + entry.getKey(), entry.getValue());
+        }
+
+        FirebaseFirestore.getInstance()
+                .collection("schedules")
+                .document(scheduleId)
+                .update(updateData)
+                .addOnSuccessListener(aVoid -> System.out.println("RPoint updated successfully!"))
+                .addOnFailureListener(e -> System.err.println("Error updating RPoint: " + e.getMessage()));
+    }
+
     public static void getScheduleById(String scheduleId, Consumer<Schedule> callback) {
         FirebaseFirestore.getInstance()
                 .collection("schedules")
@@ -168,54 +174,111 @@ public class Schedule {
                 })
                 .addOnFailureListener(listener::onError);
     }
-    public void addStuToQueue(String rpointId, String studentId) {
+// In: com/example/trackutem/model/Schedule.java
+
+    /**
+     * Updates the status, lateness, and actual arrival time for a specific route point
+     * and persists the changes to Firestore using dot notation for efficiency.
+     *
+     * @param rpointId The ID of the route point to update.
+     * @param latenessMinutes The calculated lateness in minutes.
+     * @param status The new status (e.g., "arrived", "departed").
+     * @param actTime The actual arrival time in milliseconds (can be null).
+     */
+    public void updateRPointStatus(String rpointId, int latenessMinutes, String status, Long actTime) {
+        if (rpoints == null || scheduleId == null) {
+            System.err.println("Schedule data is incomplete. Cannot update RPoint.");
+            return;
+        }
+
+        // Find the index of the route point to update
+        int rpointIndex = -1;
+        for (int i = 0; i < rpoints.size(); i++) {
+            if (rpoints.get(i).getRpointId().equals(rpointId)) {
+                rpointIndex = i;
+                break;
+            }
+        }
+
+        if (rpointIndex != -1) {
+            // Update the local object first
+            RPointDetail rpointToUpdate = rpoints.get(rpointIndex);
+            rpointToUpdate.setLatenessMinutes(latenessMinutes);
+            rpointToUpdate.setStatus(status);
+            rpointToUpdate.setActTime(actTime);
+
+            // Prepare the update map for Firestore using dot notation
+            // This updates only the specific fields in the array element
+            String basePath = "rpoints." + rpointIndex;
+            Map<String, Object> updates = new HashMap<>();
+            updates.put(basePath + ".latenessMinutes", latenessMinutes);
+            updates.put(basePath + ".status", status);
+            updates.put(basePath + ".actTime", actTime);
+
+            // Update the document in Firestore
+            FirebaseFirestore.getInstance()
+                    .collection("schedules")
+                    .document(this.scheduleId)
+                    .update(updates)
+                    .addOnSuccessListener(aVoid -> System.out.println("RPoint " + rpointId + " updated successfully!"))
+                    .addOnFailureListener(e -> System.err.println("Error updating RPoint " + rpointId + ": " + e.getMessage()));
+        } else {
+            System.err.println("Error: RPoint with ID " + rpointId + " not found in schedule.");
+        }
+    }
+    public void addStuToQueue(String rpointId, String studentId, Runnable onSuccess, Consumer<Exception> onFailure) {
         FirebaseFirestore.getInstance()
                 .collection("schedules")
-                .document(this.scheduleId) // Use this.scheduleId
+                .document(this.scheduleId)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     Schedule schedule = documentSnapshot.toObject(Schedule.class);
                     if (schedule != null && schedule.getRPoints() != null) {
                         for (RPointDetail rPointDetail : schedule.getRPoints()) {
-                            if (rPointDetail.getRPointId().equals(rpointId)) {
+                            if (rPointDetail.getRpointId().equals(rpointId)) {
                                 if (rPointDetail.getQueuedStudents() == null) {
                                     rPointDetail.setQueuedStudents(new ArrayList<>());
                                 }
                                 if (!rPointDetail.getQueuedStudents().contains(studentId)) {
                                     rPointDetail.getQueuedStudents().add(studentId);
-                                    // Update the entire schedule document
+                                    Map<String, Object> updateData = new HashMap<>();
+                                    updateData.put("rpoints", schedule.getRPoints());
+
                                     FirebaseFirestore.getInstance().collection("schedules").document(this.scheduleId)
-                                            .set(schedule)
-                                            .addOnSuccessListener(aVoid -> System.out.println("Student added to queue successfully!"))
-                                            .addOnFailureListener(e -> System.err.println("Error adding student to queue: " + e.getMessage()));
+                                            .update(updateData)
+                                            .addOnSuccessListener(aVoid -> onSuccess.run())
+                                            .addOnFailureListener(onFailure::accept);
                                 } else {
-                                    System.out.println("Student already in queue for this rpoint.");
+                                    onSuccess.run();
                                 }
                                 return;
                             }
                         }
-                        System.err.println("Error: RPoint with ID " + rpointId + " not found in schedule.");
+                        onFailure.accept(new Exception("RPoint with ID " + rpointId + " not found in schedule."));
                     } else {
-                        System.err.println("Error: Schedule or rpoints list is null.");
+                        onFailure.accept(new Exception("Schedule or rpoints list is null."));
                     }
                 })
-                .addOnFailureListener(e -> System.err.println("Error fetching schedule for adding student to queue: " + e.getMessage()));
+                .addOnFailureListener(onFailure::accept);
     }
+
     public void removeStuFromQueue(String rpointId, String studentId) {
         FirebaseFirestore.getInstance()
                 .collection("schedules")
-                .document(this.scheduleId) // Use this.scheduleId
+                .document(this.scheduleId)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     Schedule schedule = documentSnapshot.toObject(Schedule.class);
                     if (schedule != null && schedule.getRPoints() != null) {
                         for (RPointDetail rPointDetail : schedule.getRPoints()) {
-                            if (rPointDetail.getRPointId().equals(rpointId)) {
+                            if (rPointDetail.getRpointId().equals(rpointId)) {
                                 if (rPointDetail.getQueuedStudents() != null && rPointDetail.getQueuedStudents().contains(studentId)) {
                                     rPointDetail.getQueuedStudents().remove(studentId);
-                                    // Update the entire schedule document
+                                    Map<String, Object> updateData = new HashMap<>();
+                                    updateData.put("rpoints", schedule.getRPoints());
+
                                     FirebaseFirestore.getInstance().collection("schedules").document(this.scheduleId)
-                                            .set(schedule)
+                                            .update(updateData)
                                             .addOnSuccessListener(aVoid -> System.out.println("Student removed from queue successfully!"))
                                             .addOnFailureListener(e -> System.err.println("Error removing student from queue: " + e.getMessage()));
                                 } else {

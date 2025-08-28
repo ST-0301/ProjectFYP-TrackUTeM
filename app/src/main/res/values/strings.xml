@@ -1,6 +1,31 @@
 <resources>
     <string name="app_name">TrackUTeM</string>
-    <string name="google_maps_key">AIzaSyBl-nh_O2qL1Ovy-DRpS4emqsDkT6kB04E</string>
-    <string name="directions_api_key">AIzaSyDqFhzoWaZZlOmS8eXcnBzZ74P-qKT9IMs</string>
 
+    <string name="terms_and_conditions_text">
+        "<b>Terms and Conditions for TrackUTeM</b>\n\n"
+        "<i>Last updated: August 27, 2025</i>\n\n"
+        "Welcome to TrackUTeM! These terms and conditions outline the rules and regulations for the use of our mobile application.\n\n"
+        "By accessing this app, we assume you accept these terms and conditions. Do not continue to use TrackUTeM if you do not agree to all of the terms and conditions stated on this page.\n\n"
+        "<b>1. Service Description</b>\n"
+        "TrackUTeM provides real-time location tracking services for university transportation, bus schedule information, and related notifications to the UTeM community.\n\n"
+        "<b>2. User Accounts</b>\n"
+        "When you create an account with us, you must provide information that is accurate, complete, and current at all times. You are responsible for safeguarding the password that you use to access the service and for any activities or actions under your password.\n\n"
+        "<b>3. Prohibited Uses</b>\n"
+        "You agree not to use the service:\n"
+        "- In any way that violates any applicable national or international law or regulation.\n"
+        "- To harass, abuse, or harm another person.\n"
+        "- To attempt to gain unauthorized access to, interfere with, damage, or disrupt any parts of the service.\n\n"
+        "<b>4. Intellectual Property</b>\n"
+        "The service and its original content, features, and functionality are and will remain the exclusive property of TrackUTeM and its licensors.\n\n"
+        "<b>5. Limitation of Liability</b>\n"
+        "The service is provided on an \"AS IS\" and \"AS AVAILABLE\" basis. TrackUTeM does not guarantee the accuracy, completeness, or usefulness of the location data or any other information provided. We will not be liable for any direct or indirect damages arising out of your use of or inability to use the service.\n\n"
+        "<b>6. Termination</b>\n"
+        "We may terminate or suspend your account immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach the Terms.\n\n"
+        "<b>7. Governing Law</b>\n"
+        "These Terms shall be governed by and construed in accordance with the laws of Malaysia.\n\n"
+        "<b>8. Changes to These Terms</b>\n"
+        "We reserve the right, at our sole discretion, to modify or replace these Terms at any time. We will provide notice of any changes by posting the new Terms and Conditions within the app.\n\n"
+        "<b>9. Contact Us</b>\n"
+        "If you have any questions about these Terms, please contact us at support@trackutem.com."
+    </string>
 </resources>

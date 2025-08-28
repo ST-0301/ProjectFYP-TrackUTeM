@@ -3,6 +3,7 @@ package com.example.trackutem.view.Student;
 
 import android.content.Context;
 import android.transition.TransitionManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,22 +16,21 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.trackutem.R;
 import com.example.trackutem.model.Schedule;
 import com.google.android.material.transition.MaterialSharedAxis;
-
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class DateGroupAdapter extends RecyclerView.Adapter<DateGroupAdapter.DateGroupViewHolder> {
     private HashMap<String, List<Schedule>> dateGroups;
     private List<String> sortedDates;
-    private Context context;
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-    private SimpleDateFormat displayFormat = new SimpleDateFormat("EEEE, MMMM dd, yyyy", Locale.ENGLISH);
+    private final Context context;
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+    private final SimpleDateFormat displayFormat = new SimpleDateFormat("EEEE, MMMM dd, yyyy", Locale.ENGLISH);
 
     public DateGroupAdapter(Context context, HashMap<String, List<Schedule>> dateGroups) {
         this.context = context;
@@ -45,14 +45,21 @@ public class DateGroupAdapter extends RecyclerView.Adapter<DateGroupAdapter.Date
                 .inflate(R.layout.header_date_group, parent, false);
         return new DateGroupViewHolder(view);
     }
-
     @Override
     public void onBindViewHolder(@NonNull DateGroupViewHolder holder, int position) {
         String dateKey = sortedDates.get(position);
         List<Schedule> schedules = dateGroups.get(dateKey);
 
+        if (schedules != null) {
+            schedules.sort(Comparator.comparing(Schedule::getScheduledDatetime));
+        }
+
         try {
             Date parsedDate = dateFormat.parse(dateKey);
+            if (parsedDate == null) {
+                holder.tvDate.setText(dateKey);
+                return;
+            }
             Date today = new Date();
             String todayKey = dateFormat.format(today);
 
@@ -66,20 +73,16 @@ public class DateGroupAdapter extends RecyclerView.Adapter<DateGroupAdapter.Date
             holder.tvDate.setText(dateKey);
         }
 
-        // Set up nested RecyclerView
-        ScheduleStuAdapter scheduleAdapter = new ScheduleStuAdapter(context, schedules, null);
+        ScheduleStuAdapter scheduleAdapter = new ScheduleStuAdapter(context, schedules, null, null);
         holder.rvSchedules.setLayoutManager(new LinearLayoutManager(context));
         holder.rvSchedules.setAdapter(scheduleAdapter);
 
-        // Set click listener for header
         holder.headerLayout.setOnClickListener(v -> {
             boolean isExpanded = holder.rvSchedules.getVisibility() == View.VISIBLE;
 
-            // Create and configure the transition
             MaterialSharedAxis transition = new MaterialSharedAxis(MaterialSharedAxis.Y, !isExpanded);
             transition.setDuration(300);
 
-            // Begin the transition
             TransitionManager.beginDelayedTransition((ViewGroup) holder.itemView);
 
             holder.rvSchedules.setVisibility(isExpanded ? View.GONE : View.VISIBLE);
@@ -87,28 +90,47 @@ public class DateGroupAdapter extends RecyclerView.Adapter<DateGroupAdapter.Date
             holder.ivExpand.setRotation(isExpanded ? 0 : 180);
         });
     }
-
     @Override
     public int getItemCount() {
         return sortedDates.size();
     }
-
     public void updateData(HashMap<String, List<Schedule>> newDateGroups) {
-        this.dateGroups = newDateGroups;
-        this.sortedDates = sortDates(new ArrayList<>(newDateGroups.keySet()));
+        this.dateGroups = filterCancelledSchedules(newDateGroups);
+        this.sortedDates = sortDates(new ArrayList<>(this.dateGroups.keySet()));
         notifyDataSetChanged();
     }
-    private List<String> sortDates(List<String> dates) {
-        Collections.sort(dates, new Comparator<String>() {
-            @Override
-            public int compare(String date1, String date2) {
-                try {
-                    Date d1 = dateFormat.parse(date1);
-                    Date d2 = dateFormat.parse(date2);
-                    return d1.compareTo(d2);
-                } catch (Exception e) {
-                    return 0;
+    private HashMap<String, List<Schedule>> filterCancelledSchedules(HashMap<String, List<Schedule>> originalGroups) {
+        HashMap<String, List<Schedule>> filteredGroups = new HashMap<>();
+
+        for (Map.Entry<String, List<Schedule>> entry : originalGroups.entrySet()) {
+            String dateKey = entry.getKey();
+            List<Schedule> schedules = entry.getValue();
+            List<Schedule> filteredSchedules = new ArrayList<>();
+            if (schedules != null) {
+                for (Schedule schedule : schedules) {
+                    if (!"cancelled".equals(schedule.getStatus())) {
+                        filteredSchedules.add(schedule);
+                    }
                 }
+            }
+            if (!filteredSchedules.isEmpty()) {
+                filteredGroups.put(dateKey, filteredSchedules);
+            }
+        }
+        return filteredGroups;
+    }
+    private List<String> sortDates(List<String> dates) {
+        dates.sort((date1, date2) -> {
+            try {
+                Date d1 = dateFormat.parse(date1);
+                Date d2 = dateFormat.parse(date2);
+                if (d1 != null && d2 != null) {
+                    return d1.compareTo(d2);
+                }
+                return 0;
+            } catch (Exception e) {
+                Log.e("DateGroupAdapter", "Error sorting dates", e);
+                return 0;
             }
         });
         return dates;

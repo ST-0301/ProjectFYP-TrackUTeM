@@ -5,41 +5,57 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white"
+    android:background="@color/white"
     android:fitsSystemWindows="true"
     tools:context=".view.Student.ScheduleMapStuActivity">
-
-    <!-- Toolbar -->
-    <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/appBarLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/white"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            app:title="Route Map"
-            app:titleTextAppearance="@style/Toolbar.TitleText"
-            app:titleTextColor="?attr/colorOnSurface" />
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="?attr/colorOutlineVariant" />
-    </com.google.android.material.appbar.AppBarLayout>
 
     <!-- Map -->
     <fragment
         android:id="@+id/map"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="?attr/actionBarSize"/>
+        android:layout_height="match_parent" />
+
+    <!-- Bus Dropdown Selector (Top Left Overlay) -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/busDropdownCard"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:layout_gravity="top|start"
+        app:cardBackgroundColor="@color/white"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="6dp">
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="180dp"
+            android:layout_height="wrap_content"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            app:boxBackgroundColor="@color/lightGray"
+            app:boxStrokeColor="@color/primaryBlue"
+            app:boxStrokeWidth="1dp"
+            app:endIconMode="dropdown_menu"
+            app:startIconDrawable="@drawable/ic_bus"
+            app:startIconTint="@color/primaryBlue">
+
+        <AutoCompleteTextView
+            android:id="@+id/dropdownBusSelector"
+            style="@style/TextAppearance.Body.Large"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:dropDownHeight="320dp"
+            android:background="@android:color/transparent"
+            android:gravity="center_vertical"
+            android:inputType="none"
+            android:paddingHorizontal="12dp"
+            android:popupBackground="@color/lightGray"
+            android:textColor="@color/primaryBlue"
+            android:textSize="16sp"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:maxLines="1"/>
+        </com.google.android.material.textfield.TextInputLayout>
+    </com.google.android.material.card.MaterialCardView>
 
     <!-- Bottom Sheet for Route Points -->
     <com.google.android.material.card.MaterialCardView
@@ -54,8 +70,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginBottom="170dp"
-            android:background="@android:color/white"
+            android:background="@color/white"
             android:orientation="vertical"
             android:paddingHorizontal="16dp"
             android:paddingTop="12dp">
@@ -69,73 +84,116 @@
                 android:background="@drawable/bs_handle"
                 android:backgroundTint="@color/lightGray" />
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvRoutePoints"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:clipToPadding="false"
-                android:padding="16dp"
-                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                tools:listitem="@layout/item_rpoint_timeline_stu" />
-        </LinearLayout>
-
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/queueSectionCard"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
-            android:layout_marginBottom="0dp"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="12dp"
-            app:cardBackgroundColor="@color/white">
-            <!--android:elevation="8dp"-->
-
             <!-- Queue Section -->
             <LinearLayout
                 android:id="@+id/queueSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="40dp"
-                android:background="@color/white"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:layout_marginBottom="8dp"
+                android:gravity="center"
+                android:padding="12dp">
 
-                <TextView
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginBottom="8dp">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_queue"
+                        android:layout_marginEnd="6dp"
+                        app:tint="@color/primaryBlue" />
+
+                    <TextView
                     android:id="@+id/tvQueuePrompt"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    android:text="Queue at your selected stop"
+                    android:text="Tap on stops to queue"
                     android:textColor="@color/primaryBlue"
-                    android:textSize="16sp"
+                    android:textSize="14sp"
                     android:textStyle="bold" />
+                </LinearLayout>
 
+                <!-- Queue Button -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnQueueMeUp"
                     android:layout_width="match_parent"
-                    android:layout_height="56dp"
-                    android:layout_marginBottom="8dp"
+                    android:layout_height="48dp"
                     android:backgroundTint="@color/primaryBlue"
                     android:text="Queue Me Up!"
-                    android:textColor="@android:color/white"
-                    android:textSize="16sp"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
                     android:textStyle="bold"
                     android:visibility="visible"
-                    app:cornerRadius="16dp" />
+                    app:icon="@drawable/ic_person_add"
+                    app:iconTint="@color/white"
+                    app:iconPadding="8dp"/>
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnCancelQueue"
                     style="@style/Widget.Material3.Button.OutlinedButton"
                     android:layout_width="match_parent"
-                    android:layout_height="56dp"
+                    android:layout_height="48dp"
                     android:text="Cancel Queue"
                     android:textColor="@color/colorError"
-                    android:textSize="16sp"
+                    android:textSize="14sp"
                     android:textStyle="bold"
                     android:visibility="gone"
-                    app:cornerRadius="16dp"
+                    app:cornerRadius="24dp"
+                    app:icon="@drawable/ic_close"
+                    app:iconTint="@color/colorError"
                     app:strokeColor="@color/colorError" />
             </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
+
+            <!-- Divider -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="?android:attr/listDivider" />
+
+            <!-- Header for timeline -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingVertical="8dp"
+                android:paddingHorizontal="16dp"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tvRouteHeader"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Route Timeline"
+                    android:textColor="@color/darkGray"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvScheduleStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Upcoming"
+                    android:textColor="@color/primaryBlue"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- RecyclerView -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvRoutePoints"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:clipToPadding="false"
+                android:paddingHorizontal="8dp"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                tools:listitem="@layout/item_rpoint_timeline_stu" />
+        </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

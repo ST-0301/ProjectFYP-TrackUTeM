@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white"
+    android:background="@color/white"
     tools:context=".MainStuActivity">
 
     <!-- Google Map Fragment -->
@@ -15,7 +15,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:context=".MainStuActivity"/>
-        
+
     <!-- Top Centered Search Bar -->
     <FrameLayout
         android:id="@+id/searchBarContainer"
@@ -25,51 +25,68 @@
         android:paddingTop="36dp"
         android:paddingHorizontal="10dp">
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:layout_height="wrap_content">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnWhereToGo"
                 style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="325dp"
+                android:layout_width="0dp"
                 android:layout_height="66dp"
                 android:layout_marginEnd="8dp"
-                android:backgroundTint="@android:color/white"
+                android:backgroundTint="@color/white"
+                android:elevation="6dp"
                 android:gravity="center"
                 android:hint="Where to go?"
                 android:focusable="true"
                 android:clickable="true"
                 android:textColor="@color/black"
-                android:textSize="18sp"
-                app:cornerRadius="16dp"/>
+                android:textSize="16sp"
+                app:cornerRadius="24dp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/btnNotifications"
+                app:strokeColor="?attr/colorOutlineVariant"
+                app:strokeWidth="1dp" />
 
-<!--            <com.google.android.material.button.MaterialButton-->
-<!--                android:id="@+id/btnNotifications"-->
-<!--                style="@style/Widget.Material3.Button.IconButton"-->
-<!--                android:layout_width="wrap_content"-->
-<!--                android:layout_height="56dp"-->
-<!--                android:backgroundTint="@android:color/white"-->
-<!--                android:paddingHorizontal="10dp"-->
-<!--                app:cornerRadius="16dp"-->
-<!--                app:icon="@drawable/ic_notifications"-->
-<!--                app:iconTint="@color/textSecondary"-->
-<!--                app:tint="?attr/colorOnSurface" />-->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnNotifications"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="wrap_content"
+                android:layout_height="66dp"
+                android:backgroundTint="@color/white"
+                android:elevation="6dp"
+                android:paddingHorizontal="14dp"
+                app:cornerRadius="24dp"
+                app:icon="@drawable/ic_notifications"
+                app:iconTint="@color/textSecondary"
+                app:tint="?attr/colorOnSurface"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/btnSettings"
+                app:strokeColor="?attr/colorOutlineVariant"
+                app:strokeWidth="1dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSettings"
                 style="@style/Widget.Material3.Button.IconButton"
                 android:layout_width="wrap_content"
-                android:layout_height="56dp"
-                android:backgroundTint="@android:color/white"
-                android:paddingHorizontal="10dp"
-                app:cornerRadius="16dp"
+                android:layout_height="66dp"
+                android:backgroundTint="@color/white"
+                android:elevation="6dp"
+                android:paddingHorizontal="14dp"
+                app:cornerRadius="24dp"
                 app:icon="@drawable/ic_settings"
                 app:iconTint="@color/textSecondary"
-                app:tint="?attr/colorOnSurface"/>
-        </LinearLayout>
+                app:tint="?attr/colorOnSurface"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:strokeColor="?attr/colorOutlineVariant"
+                app:strokeWidth="1dp" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </FrameLayout>
 
     <!-- Draggable Rounded Bottom Sheet -->
@@ -85,9 +102,9 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@android:color/white"
+            android:background="@color/white"
             android:orientation="vertical"
-            android:paddingHorizontal="16dp"
+            android:paddingHorizontal="20dp"
             android:paddingTop="12dp">
 
             <!-- Handle -->
@@ -127,9 +144,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
-                android:padding="4dp"
                 android:clipToPadding="false"
-                android:contentDescription="List of routes passing through this stop"/>
+                android:contentDescription="List of routes passing through this stop" />
 
             <TextView
                 android:id="@+id/tvEmpty"
@@ -148,8 +164,6 @@
         android:id="@+id/fragmentContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@android:color/white"
-        android:clickable="true"
-        android:focusable="true"
+        android:background="@color/white"
         android:visibility="gone" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

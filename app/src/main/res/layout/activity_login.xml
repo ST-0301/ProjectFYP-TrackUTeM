@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="24dp"
-        app:cardBackgroundColor="@android:color/white"
+        app:cardBackgroundColor="@color/white"
         app:cardCornerRadius="20dp"
         app:cardElevation="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -30,7 +30,7 @@
                 android:layout_height="100dp"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginBottom="16dp"
-                android:src="@drawable/logo"
+                android:src="@mipmap/ic_launcher_round"
                 android:contentDescription="Logo" />
 
             <TextView
@@ -96,16 +96,26 @@
                 android:layout_marginTop="16dp"
                 android:backgroundTint="@color/primaryBlue"
                 android:text="Login"
-                android:textColor="@android:color/white"
+                android:textColor="@color/white"
                 android:textSize="14sp"
                 app:cornerRadius="28dp" />
+
+            <!-- Loading UI -->
+            <ProgressBar
+                android:id="@+id/progressBar"
+                style="@style/LoadingProgressBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:visibility="gone"
+                android:layout_marginTop="16dp"/>
 
             <TextView
                 android:id="@+id/tvForgotPassword"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="16dp"
                 android:text="Forgot Password?"
                 android:textColor="@color/primaryBlue"
                 android:textSize="12sp"/>

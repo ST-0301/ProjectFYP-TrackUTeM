@@ -2,6 +2,8 @@ package com.example.trackutem.view.Student;
 
 import android.animation.ObjectAnimator;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -13,18 +15,18 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.example.trackutem.model.RoutePoint;
 import com.example.trackutem.model.Schedule;
 import com.example.trackutem.R;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.textfield.TextInputLayout;
-
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -34,12 +36,13 @@ public class GetDirectionActivity extends AppCompatActivity {
     private AutoCompleteTextView dropdownFrom, dropdownTo;
     private ImageButton btnReverse;
     private RecyclerView rvSchedules;
-    private List<RoutePoint> busStops = new ArrayList<>();
-    private Map<String, RoutePoint> nameToRoutePoint = new HashMap<>();
-    private List<Schedule> matchingSchedules = new ArrayList<>();
+    private final List<RoutePoint> busStops = new ArrayList<>();
+    private final List<String> allStopNames = new ArrayList<>();
+    private final Map<String, RoutePoint> nameToRoutePoint = new HashMap<>();
+    private final List<Schedule> matchingSchedules = new ArrayList<>();
     private TextView tvEmpty;
-    private String selectedFromRPointId = null;
 
+    // LIFECYCLE METHODS
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,7 +53,6 @@ public class GetDirectionActivity extends AppCompatActivity {
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
-//            actionBar.setHomeButtonEnabled(true);
 
         dropdownFrom = findViewById(R.id.dropdownFrom);
         dropdownTo = findViewById(R.id.dropdownTo);
@@ -63,11 +65,9 @@ public class GetDirectionActivity extends AppCompatActivity {
             String from = dropdownFrom.getText().toString();
             String to = dropdownTo.getText().toString();
             if (!from.isEmpty() || !to.isEmpty()) {
-
                 dropdownFrom.setText(to, false);
                 dropdownTo.setText(from, false);
-                tryShowSchedules();
-                // Play animation
+
                 ObjectAnimator rotateAnim = ObjectAnimator.ofFloat(btnReverse, "rotation", 0f, 360f);
                 rotateAnim.setDuration(400);
                 rotateAnim.setInterpolator(new AccelerateDecelerateInterpolator());
@@ -77,26 +77,34 @@ public class GetDirectionActivity extends AppCompatActivity {
         fetchBusStops();
         setupTabs();
     }
-    
+    @Override
+    public boolean onSupportNavigateUp() {
+        finish();
+        return true;
+    }
+
+    // DATA FETCHING METHODS
     private void fetchBusStops() {
         RoutePoint.getAllRPoints(new RoutePoint.AllRPointsCallback() {
             @Override
             public void onSuccess(List<RoutePoint> rpoints) {
                 busStops.clear();
                 nameToRoutePoint.clear();
-                List<String> stopNames = new ArrayList<>();
+                allStopNames.clear();
                 for (RoutePoint rp : rpoints) {
                     if ("bus_stop".equals(rp.getType())) {
                         busStops.add(rp);
-                        stopNames.add(rp.getName());
+                        allStopNames.add(rp.getName());
                         nameToRoutePoint.put(rp.getName(), rp);
                     }
                 }
-                java.util.Collections.sort(stopNames);
+                java.util.Collections.sort(allStopNames);
                 ArrayAdapter<String> adapter = new ArrayAdapter<>(GetDirectionActivity.this,
-                        android.R.layout.simple_dropdown_item_1line, stopNames);
+                        android.R.layout.simple_dropdown_item_1line, allStopNames);
                 dropdownFrom.setAdapter(adapter);
                 dropdownTo.setAdapter(adapter);
+                setDropdownHeight(adapter, dropdownFrom);
+                setDropdownHeight(adapter, dropdownTo);
 
                 setupSelectionListener();
             }
@@ -106,25 +114,86 @@ public class GetDirectionActivity extends AppCompatActivity {
             }
         });
     }
+    private void setDropdownHeight(ArrayAdapter<String> adapter, AutoCompleteTextView dropdown) {
+        int itemCount = adapter.getCount();
+        int maxVisibleItems = 5;
+        int itemHeight = 64;
+        int desiredHeight = Math.min(itemCount, maxVisibleItems) * dpToPx(itemHeight);
+        int maxHeight = dpToPx(320);
+        dropdown.setDropDownHeight(Math.min(desiredHeight, maxHeight));
+    }
+    private int dpToPx(int dp) {
+        float density = getResources().getDisplayMetrics().density;
+        return Math.round((float) dp * density);
+    }
+    private void fetchSchedules(String fromRPointId, String toRPointId) {
+        Schedule.getAllSchedules(new Schedule.OnSchedulesRetrieved() {
+            @Override
+            public void onSuccess(List<Schedule> schedules) {
+                matchingSchedules.clear();
+                for (Schedule schedule : schedules) {
+                    if ("cancelled".equals(schedule.getStatus())) {
+                        continue;
+                    }
+                    if (schedule.getBusDriverPairId() == null || schedule.getBusDriverPairId().isEmpty()) {
+                        continue;
+                    }
+                    List<Schedule.RPointDetail> rpoints = schedule.getRPoints();
+                    if (rpoints != null) {
+                        int fromIndex = -1;
+                        int toIndex = -1;
+                        for (int i = 0; i < rpoints.size(); i++) {
+                            String rpointId = rpoints.get(i).getRpointId();
+                            if (rpointId.equals(fromRPointId)) {
+                                fromIndex = i;
+                            }
+                            if (rpointId.equals(toRPointId)) {
+                                toIndex = i;
+                                break;
+                            }
+                        }
+                        if (fromIndex != -1 && toIndex != -1 && fromIndex < toIndex) {
+                            matchingSchedules.add(schedule);
+                        }
+                    }
+                }
+                matchingSchedules.sort(Comparator.comparing(Schedule::getScheduledDatetime));
 
+                TabLayout tabLayout = findViewById(R.id.tabLayout);
+                if (tabLayout.getTabCount() > 0) {
+                    tabLayout.selectTab(tabLayout.getTabAt(0));
+                    filterSchedulesForDay(0);
+                }
+            }
+            @Override
+            public void onError(Exception e) {
+                Toast.makeText(GetDirectionActivity.this, "Failed to load schedules", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    // UI SETUP METHODS
     private void setupSelectionListener() {
         TextInputLayout fromLayout = (TextInputLayout) dropdownFrom.getParent().getParent();
         TextInputLayout toLayout = (TextInputLayout) dropdownTo.getParent().getParent();
 
-        // Set initial hint
         fromLayout.setHint("Select stop");
         toLayout.setHint("Select stop");
+        TextWatcher textWatcher = new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override public void afterTextChanged(Editable s) {
+                // Any text change should update the adapters and try to show schedules
+                updateDropdownAdapters();
+                tryShowSchedules();
+            }
+        };
+        dropdownFrom.addTextChangedListener(textWatcher);
+        dropdownTo.addTextChangedListener(textWatcher);
 
-        dropdownFrom.setOnItemClickListener((parent, view, position, id) -> {
-            fromLayout.setHint(""); // Hide hint when selected
-            tryShowSchedules();
-        });
-        dropdownTo.setOnItemClickListener((parent, view, position, id) -> {
-            toLayout.setHint(""); // Hide hint when selected
-            tryShowSchedules();
-        });
+        dropdownFrom.setOnItemClickListener((parent, view, position, id) -> fromLayout.setHint(""));
+        dropdownTo.setOnItemClickListener((parent, view, position, id) -> toLayout.setHint(""));
 
-        // Restore hint if cleared
         dropdownFrom.setOnFocusChangeListener((v, hasFocus) -> {
             if (!hasFocus && dropdownFrom.getText().toString().isEmpty()) {
                 fromLayout.setHint("Select stop");
@@ -136,88 +205,9 @@ public class GetDirectionActivity extends AppCompatActivity {
             }
         });
     }
-
-    private void tryShowSchedules() {
-        String fromName = dropdownFrom.getText().toString();
-        String toName = dropdownTo.getText().toString();
-        if (!fromName.isEmpty() && !toName.isEmpty() && !fromName.equals(toName)) {
-            RoutePoint fromPoint = nameToRoutePoint.get(fromName);
-            RoutePoint toPoint = nameToRoutePoint.get(toName);
-            if (fromPoint != null && toPoint != null) {
-                selectedFromRPointId = fromPoint.getRPointId();
-                findViewById(R.id.tabLayout).setVisibility(View.VISIBLE);
-                findViewById(R.id.viewPager).setVisibility(View.VISIBLE);
-                findViewById(R.id.rvSchedules).setVisibility(View.VISIBLE);
-                fetchSchedules(fromPoint.getRPointId(), toPoint.getRPointId());
-            }
-        }
-    }
-
-    private void fetchSchedules(String fromRPointId, String toRPointId) {
-        Schedule.getAllSchedules(new Schedule.OnSchedulesRetrieved() {
-            @Override
-            public void onSuccess(List<Schedule> schedules) {
-                matchingSchedules.clear();
-                for (Schedule schedule : schedules) {
-                    List<Schedule.RPointDetail> rpoints = schedule.getRPoints();
-                    // if (rpoints != null) {
-                    //     List<String> rpointIds = new ArrayList<>();
-                    //     for (Schedule.RPointDetail rpd : rpoints) {
-                    //         rpointIds.add(rpd.getRPointId());
-                    //     }
-                    //     if (rpointIds.contains(fromRPointId) && rpointIds.contains(toRPointId)) {
-                    //         matchingSchedules.add(schedule);
-                    //     }
-                    // }
-                    if (rpoints != null) {
-                        int fromIndex = -1;
-                        int toIndex = -1;
-                        for (int i = 0; i < rpoints.size(); i++) {
-                            String rpointId = rpoints.get(i).getRPointId();
-                            if (rpointId.equals(fromRPointId) && fromIndex == -1) {
-                                fromIndex = i;
-                            }
-                            if (rpointId.equals(toRPointId) && fromIndex != -1 && toIndex == -1) {
-                                toIndex = i;
-                                break; // found both in order
-                            }
-                        }
-                        if (fromIndex != -1 && toIndex != -1 && fromIndex < toIndex) {
-                            matchingSchedules.add(schedule);
-                        }
-                    }
-                }
-                TabLayout tabLayout = findViewById(R.id.tabLayout);
-                if (tabLayout.getTabCount() > 0) {
-                    tabLayout.selectTab(tabLayout.getTabAt(0)); 
-                    filterSchedulesForDay(0);
-                }
-            }
-            @Override
-            public void onError(Exception e) {
-                Toast.makeText(GetDirectionActivity.this, "Failed to load schedules", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    private void showSchedules(List<Schedule> schedules) {
-        RecyclerView rv = findViewById(R.id.rvSchedules);
-        tvEmpty = findViewById(R.id.tvEmpty);
-        if (schedules.isEmpty()) {
-            rv.setVisibility(View.GONE);
-            tvEmpty.setVisibility(View.VISIBLE);
-        } else {
-            rv.setVisibility(View.VISIBLE);
-            tvEmpty.setVisibility(View.GONE);
-            rv.setLayoutManager(new LinearLayoutManager(this));
-            ScheduleStuAdapter adapter = new ScheduleStuAdapter(this, schedules, selectedFromRPointId);
-            rv.setAdapter(adapter);
-        }
-    }
-
     private void setupTabs() {
-        int primaryBlue = getResources().getColor(R.color.primaryBlue);
-        int textSecondary = getResources().getColor(R.color.textSecondary);
+        int primaryBlue = ContextCompat.getColor(this, R.color.primaryBlue);
+        int textSecondary = ContextCompat.getColor(this, R.color.textSecondary);
         TabLayout tabLayout = findViewById(R.id.tabLayout);
         LayoutInflater inflater = LayoutInflater.from(this);
         SimpleDateFormat dayFormat = new SimpleDateFormat("EEE", Locale.ENGLISH);
@@ -225,10 +215,10 @@ public class GetDirectionActivity extends AppCompatActivity {
         Calendar cal = Calendar.getInstance();
 
         for (int i = 0; i < 7; i++) {
-            View tabView = inflater.inflate(R.layout.tab_schedule_day, null);
+            View tabView = inflater.inflate(R.layout.tab_schedule_day, tabLayout, false);
             TextView tvDay = tabView.findViewById(R.id.tvTabDay);
             TextView tvDate = tabView.findViewById(R.id.tvTabDate);
-                                                                                            
+
             if (i == 0) {
                 tvDay.setText("Today");
             } else {
@@ -270,11 +260,52 @@ public class GetDirectionActivity extends AppCompatActivity {
             @Override public void onTabReselected(TabLayout.Tab tab) {}
         });
     }
+
+    // DATA PROCESSING METHODS
+    private void updateDropdownAdapters() {
+        String fromText = dropdownFrom.getText().toString();
+        String toText = dropdownTo.getText().toString();
+
+        // Create a list for the 'To' dropdown, excluding the 'From' selection
+        List<String> stopsForTo = new ArrayList<>(allStopNames);
+        if (!fromText.isEmpty()) {
+            stopsForTo.remove(fromText);
+        }
+
+        // Create a list for the 'From' dropdown, excluding the 'To' selection
+        List<String> stopsForFrom = new ArrayList<>(allStopNames);
+        if (!toText.isEmpty()) {
+            stopsForFrom.remove(toText);
+        }
+
+        // Create and set the adapter for the 'To' dropdown
+        ArrayAdapter<String> toAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, stopsForTo);
+        dropdownTo.setAdapter(toAdapter);
+        setDropdownHeight(toAdapter, dropdownTo);
+
+        // Create and set the adapter for the 'From' dropdown
+        ArrayAdapter<String> fromAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, stopsForFrom);
+        dropdownFrom.setAdapter(fromAdapter);
+        setDropdownHeight(fromAdapter, dropdownFrom);
+    }
+    private void tryShowSchedules() {
+        String fromName = dropdownFrom.getText().toString();
+        String toName = dropdownTo.getText().toString();
+
+        RoutePoint fromPoint = nameToRoutePoint.get(fromName);
+        RoutePoint toPoint = nameToRoutePoint.get(toName);
+        if (fromPoint != null && toPoint != null && !fromName.equals(toName)) {
+            findViewById(R.id.tabLayout).setVisibility(View.VISIBLE);
+            fetchSchedules(fromPoint.getRPointId(), toPoint.getRPointId());
+        } else {
+            findViewById(R.id.tabLayout).setVisibility(View.GONE);
+            findViewById(R.id.rvSchedules).setVisibility(View.GONE);
+            tvEmpty.setVisibility(View.GONE);
+        }
+    }
     private void filterSchedulesForDay(int tabPosition) {
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.DAY_OF_YEAR, tabPosition);
-
-//        String dayName = new SimpleDateFormat("EEEE", Locale.ENGLISH).format(cal.getTime()).toLowerCase();
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
         String targetDate = dateFormat.format(cal.getTime());
 
@@ -285,17 +316,26 @@ public class GetDirectionActivity extends AppCompatActivity {
                 filtered.add(schedule);
             }
         }
+        filtered.sort(Comparator.comparing(Schedule::getScheduledDatetime));
         if (filtered.isEmpty()) {
             rvSchedules.setVisibility(View.GONE);
             tvEmpty.setVisibility(View.VISIBLE);
         } else {
-            showSchedules(filtered);
+            String fromName = dropdownFrom.getText().toString();
+            String toName = dropdownTo.getText().toString();
+            RoutePoint fromPoint = nameToRoutePoint.get(fromName);
+            RoutePoint toPoint = nameToRoutePoint.get(toName);
+
+            rvSchedules.setVisibility(View.VISIBLE);
+            tvEmpty.setVisibility(View.GONE);
+            rvSchedules.setLayoutManager(new LinearLayoutManager(this));
+            ScheduleStuAdapter adapter = new ScheduleStuAdapter(
+                    this,
+                    filtered,
+                    fromPoint != null ? fromPoint.getRPointId() : null,
+                    toPoint != null ? toPoint.getRPointId() : null
+            );
+            rvSchedules.setAdapter(adapter);
         }
-    }
-    
-    @Override
-    public boolean onSupportNavigateUp() {
-        finish();
-        return true;
     }
 }

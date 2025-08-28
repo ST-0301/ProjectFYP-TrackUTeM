@@ -13,6 +13,7 @@
         android:id="@+id/navigation_notifications"
         android:icon="@drawable/ic_notifications"
         android:title="NOTIFICATIONS" />
+
     <item
         android:id="@+id/navigation_settings"
         android:icon="@drawable/ic_settings"

@@ -1,7 +1,179 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white">
+    android:background="@color/white"
+    android:padding="8dp"
+    tools:context=".view.Driver.HomeDrvFragment">
 
+    <TextView
+        android:id="@+id/tvGreeting"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="24dp"
+        android:text="Good Morning, Ali 👋"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="@color/black"
+        app:layout_constraintTop_toTopOf="parent"/>
+
+    <TextView
+        android:id="@+id/tvDateTime"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        tools:text="August 28, 2025 | 04:05 AM"
+        android:textSize="14sp"
+        app:layout_constraintTop_toBottomOf="@id/tvGreeting"/>
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/todaysWorkCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="24dp"
+        app:cardBackgroundColor="#F5F5F5"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="4dp"
+        app:layout_constraintTop_toBottomOf="@id/tvDateTime">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Today’s Assignments"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/black"/>
+
+            <!-- Loading UI -->
+            <ProgressBar
+                android:id="@+id/pbLoadingAssignments"
+                style="@style/LoadingProgressBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:layout_gravity="center"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/tvLoadingAssignments"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_gravity="center"
+                android:text="Loading assignments..."
+                android:visibility="gone"/>
+
+            <TextView
+                android:id="@+id/tvProgressSummary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                tools:text="2/5 completed today"/>
+
+            <ProgressBar
+                android:id="@+id/pbToday"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:progress="40"
+                android:progressTint="@color/design_default_color_primary"/>
+
+            <TextView
+                android:id="@+id/tvAssignment1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:drawablePadding="8dp"
+                android:gravity="center_vertical"
+                android:ellipsize="end"
+                android:maxLines="1"
+                tools:text="09:00 AM - Route A (Next)"
+                android:textColor="@color/black"
+                app:drawableStartCompat="@drawable/ic_bus" />
+
+            <TextView
+                android:id="@+id/tvAssignment2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:drawablePadding="8dp"
+                android:gravity="center_vertical"
+                tools:text="11:30 AM - Route B"
+                app:drawableStartCompat="@drawable/ic_bus" />
+
+            <TextView
+                android:id="@+id/tvAssignment3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:drawablePadding="8dp"
+                android:gravity="center_vertical"
+                tools:text="12:30 AM - Route C"
+                app:drawableStartCompat="@drawable/ic_bus" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Completed Trips Card - Initially hidden -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/completedTripsCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="24dp"
+        app:cardBackgroundColor="#F5F5F5"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="4dp"
+        app:layout_constraintTop_toBottomOf="@id/todaysWorkCard">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Completed Trips"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/black"/>
+
+            <TextView
+                android:id="@+id/tvCompletedSummary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                tools:text="2 Trips Done ✅"
+                android:textColor="@android:color/holo_green_dark"
+                android:textStyle="bold"/>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabEmergencyCall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        app:backgroundTint="@android:color/holo_red_dark"
+        app:tint="@color/white"
+        app:srcCompat="@drawable/ic_emergency_call"
+        android:contentDescription="Emergency Call"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

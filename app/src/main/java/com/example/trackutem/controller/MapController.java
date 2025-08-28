@@ -26,6 +26,7 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.Priority;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptor;
@@ -40,6 +41,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.maps.android.PolyUtil;
 
+import java.io.IOException;
 import java.util.List;
 
 import retrofit2.Call;
@@ -169,6 +171,12 @@ public class MapController {
             }
             waypointsStr = sb.substring(0, sb.length() - 1);
         }
+
+        String requestUrl = "https://maps.googleapis.com/maps/api/directions/json" +
+                "?origin=" + originStr +
+                "&destination=" + destinationStr +
+                (waypointsStr != null ? "&waypoints=" + waypointsStr : "") +
+                "&key=" + apiKey;
 
         directionsService.getDirections(originStr, destinationStr, waypointsStr, apiKey)
                 .enqueue(new Callback<DirectionsResponse>() {
@@ -334,7 +342,7 @@ public void addAllBusStops() {
         }
     });
 }
-    private BitmapDescriptor getBusStopIcon() {
+    public BitmapDescriptor getBusStopIcon() {
         // int height = 110;
         // int width = 80;
         // BitmapDrawable bitmapdraw = (BitmapDrawable) ContextCompat.getDrawable(context, R.drawable.bus_stop_marker);
@@ -357,6 +365,12 @@ public void addAllBusStops() {
         vectorDrawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
         vectorDrawable.draw(canvas);
         return BitmapDescriptorFactory.fromBitmap(bitmap);
+    }
+    public void moveCameraToLocation(LatLng location, float zoomLevel) {
+        if (mMap != null) {
+            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(location, zoomLevel);
+            mMap.animateCamera(cameraUpdate);
+        }
     }
     public BitmapDescriptor getBusLocationIcon() {
         // int height = 110;

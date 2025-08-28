@@ -5,35 +5,19 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="24dp"
-    android:layout_marginTop="8dp"
-    android:layout_marginBottom="16dp"
-    app:cardBackgroundColor="@color/lightGray"
+    android:layout_marginHorizontal="8dp"
+    android:layout_marginVertical="8dp"
+    app:cardBackgroundColor="@color/white"
     app:cardCornerRadius="20dp"
-    app:cardElevation="4dp"
+    app:cardElevation="2dp"
     app:strokeColor="?attr/colorOutlineVariant"
     app:strokeWidth="1dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp">
-
-        <!-- Day chip -->
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chipDay"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:clickable="false"
-            android:focusable="false"
-            android:textColor="@android:color/white"
-            android:textSize="11sp"
-            app:chipBackgroundColor="@color/modernPurple"
-            app:chipCornerRadius="8dp"
-            app:chipStrokeColor="@android:color/transparent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:text="Monday"/>
+        android:paddingHorizontal="18dp"
+        android:paddingVertical="22dp">
 
         <!-- Status Chip -->
         <com.google.android.material.chip.Chip
@@ -43,65 +27,82 @@
             android:clickable="false"
             android:focusable="false"
             android:textColor="@android:color/white"
-            android:textSize="11sp"
+            android:textSize="14sp"
             app:chipBackgroundColor="@color/primaryBlue"
-            app:chipCornerRadius="8dp"
+            app:chipCornerRadius="13dp"
             app:chipStrokeColor="@android:color/transparent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@id/chipDay"
-            app:layout_constraintBottom_toBottomOf="@id/chipDay"
-            tools:text="scheduled" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            tools:text="start trip" />
 
-        <!-- Time -->
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/tvTime"
+        <LinearLayout
+            android:id="@+id/timeBusContainer"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:drawableStart="@drawable/ic_access_time"
-            android:drawablePadding="8dp"
-            android:drawableTint="?attr/colorPrimary"
-            android:textSize="18sp"
-            android:textColor="?attr/colorOnSurface"
-            android:textStyle="bold"
-            app:layout_constraintTop_toBottomOf="@id/chipDay"
+            android:orientation="horizontal"
+            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            tools:text="08:30" />
+            app:layout_constraintBottom_toTopOf="@id/routeContainer"
+            app:layout_constraintEnd_toStartOf="@id/chipStatus">
 
-        <!-- Route Name and Type Container -->
+            <!-- Time -->
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/tvTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="20dp"
+                android:drawableStart="@drawable/ic_access_time"
+                android:drawablePadding="4dp"
+                android:drawableTint="?attr/colorPrimary"
+                android:textSize="20sp"
+                android:textColor="?attr/colorOnSurface"
+                android:textStyle="bold"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/tvBusPlate"
+                tools:text="08:30" />
+
+            <!-- Bus Plate Number -->
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/tvBusPlate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:drawableStart="@drawable/ic_bus"
+                android:drawablePadding="4dp"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toEndOf="@id/tvTime"
+                app:layout_constraintEnd_toEndOf="parent"
+                tools:text="MAA1234" />
+        </LinearLayout>
+
         <LinearLayout
             android:id="@+id/routeContainer"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
             android:orientation="horizontal"
-            android:baselineAligned="false"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/timeBusContainer"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvTime">
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/chipStatus">
 
-            <!-- Route Name -->
+            <!-- Route Name & Type -->
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/tvRoute"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:layout_marginTop="8dp"
                 android:textSize="14sp"
                 android:textColor="?attr/colorOnSurfaceVariant"
                 android:ellipsize="end"
                 android:maxLines="1"
-                tools:text="Satria to Induk" />
-
-            <!-- Type (Incampus/Outcampus) -->
-            <com.google.android.material.textview.MaterialTextView
-                android:id="@+id/tvType"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="14sp"
-                android:textColor="?attr/colorOnSurfaceVariant"
-                android:layout_marginStart="4dp"
-                tools:text="(Incampus)" />
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvTime"
+                app:layout_constraintEnd_toStartOf="@id/chipStatus"
+                tools:text="Satria to Induk (incampus)" />
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>

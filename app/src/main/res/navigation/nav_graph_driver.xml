@@ -1,29 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph_driver"
     app:startDestination="@id/navigation_home">
 
     <fragment
         android:id="@+id/navigation_home"
         android:name="com.example.trackutem.view.Driver.HomeDrvFragment"
-        android:label="Home" />
+        android:label="Home"
+        tools:layout="@layout/fragment_home_drv" />
 
     <fragment
         android:id="@+id/navigation_trip"
         android:name="com.example.trackutem.view.Driver.TripsFragment"
-        android:label="My Trips" />
+        android:label="My Trips"
+        tools:layout="@layout/fragment_trips" />
 
-    <!-- dont know separate or not-->
     <fragment
         android:id="@+id/navigation_notifications"
         android:name="com.example.trackutem.view.NotificationsFragment"
-        android:label="Notifications" />
+        android:label="Notifications"
+        tools:layout="@layout/fragment_notifications" />
 
-
-<!--separate settings for driver and student, easier-->
     <fragment
         android:id="@+id/navigation_settings"
         android:name="com.example.trackutem.view.SettingsFragment"
-        android:label="Settings" />
+        android:label="Settings"
+        tools:layout="@layout/fragment_settings" />
 </navigation>

@@ -2,10 +2,47 @@
 package com.example.trackutem.controller;
 
 import com.example.trackutem.model.Schedule;
-import com.example.trackutem.model.Schedule.RPointDetail;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.Calendar;
+import java.util.Date;
 
 public class ScheduleController {
+    public void isStudentQueuedInGroup(String studentId, String routeId, String type, Date scheduledDatetime, QueueCheckCallback callback) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(scheduledDatetime);
+        cal.add(Calendar.MINUTE, -30);
+        Date startTime = cal.getTime();
+
+        cal.setTime(scheduledDatetime);
+        cal.add(Calendar.MINUTE, 30);
+        Date endTime = cal.getTime();
+
+        db.collection("schedules")
+                .whereEqualTo("routeId", routeId)
+                .whereEqualTo("type", type)
+                .whereGreaterThanOrEqualTo("scheduledDatetime", startTime)
+                .whereLessThanOrEqualTo("scheduledDatetime", endTime)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                        Schedule schedule = document.toObject(Schedule.class);
+                        if (schedule.getRPoints() != null) {
+                            for (Schedule.RPointDetail rpoint : schedule.getRPoints()) {
+                                if (rpoint.getQueuedStudents() != null && rpoint.getQueuedStudents().contains(studentId)) {
+                                    callback.onResult(true, "You are already queued for another schedule in this route group.");
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                    callback.onResult(false, null);
+                })
+                .addOnFailureListener(e -> callback.onResult(false, "Error checking queue status: " + e.getMessage()));
+    }
+
     public static int calculateLateness(String planTime, long actualTime, long tripStartTime) {
         try {
             // Create calendar with trip start date
@@ -32,46 +69,7 @@ public class ScheduleController {
         }
     }
 
-    public static void recordArrivalAndNextDeparture(Schedule schedule, int rpointIndex) {
-        if (schedule == null) return;
-
-        // If event type, only update status if completed
-        if ("event".equalsIgnoreCase(schedule.getType())) {
-            // Mark as completed and set tripEndTime if last point
-            if (rpointIndex == schedule.getRPoints().size() - 1) {
-                schedule.setStatus("completed");
-                schedule.setCurrentRPointIndex(-1);
-                schedule.updateInFirestore();
-            }
-            return;
-        }
-        if (rpointIndex < 0 || rpointIndex >= schedule.getRPoints().size()) return;
-
-        // Record current route point arrival
-        RPointDetail currentRPoint = schedule.getRPoints().get(rpointIndex);
-        long arrivalTime = System.currentTimeMillis();
-        currentRPoint.setActTime(arrivalTime);
-        currentRPoint.setStatus("arrived");
-
-        // Calculate lateness
-        int lateness = calculateLateness(currentRPoint.getPlanTime(), arrivalTime, schedule.getScheduledDatetime().getTime());
-        if (lateness > 0) {
-            currentRPoint.setLatenessMinutes(lateness);
-        } else {
-            currentRPoint.setLatenessMinutes(0);
-        }
-
-        // Record next route point departure if exists
-        int nextIndex = rpointIndex + 1;
-        if (nextIndex < schedule.getRPoints().size()) {
-            RPointDetail nextRPoint = schedule.getRPoints().get(nextIndex);
-            nextRPoint.setActTime(System.currentTimeMillis());
-            nextRPoint.setStatus("departed");
-            schedule.setCurrentRPointIndex(nextIndex);
-        } else {
-            schedule.setCurrentRPointIndex(-1);
-            schedule.setStatus("completed");
-        }
-        schedule.updateInFirestore();
+    public interface QueueCheckCallback {
+        void onResult(boolean isQueued, String message);
     }
 }

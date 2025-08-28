@@ -20,10 +20,11 @@ import com.example.trackutem.controller.MapController;
 import com.example.trackutem.model.Route;
 import com.example.trackutem.model.RoutePoint;
 import com.example.trackutem.service.MyFirebaseMessagingService;
-import com.example.trackutem.view.RouteAdapter;
-import com.example.trackutem.view.SettingsActivity;
+import com.example.trackutem.view.NotificationsFragment;
+import com.example.trackutem.view.Student.RouteStuAdapter;
+import com.example.trackutem.view.SettingsFragment;
 import com.example.trackutem.view.Student.GetDirectionActivity;
-import com.example.trackutem.view.Student.RouteScheduleActivity;
+import com.example.trackutem.view.Student.RouteScheduleStuActivity;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -43,7 +44,7 @@ public class MainStuActivity extends AppCompatActivity {
     private BottomSheetBehavior<View> behavior;
     private TextView tvStopName, tvRoutesTitle, tvEmpty;
     private RecyclerView rvRoutes;
-    private RouteAdapter routeAdapter;
+    private RouteStuAdapter routeStuAdapter;
     private FrameLayout fragmentContainer, searchBarContainer;
 
     @Override
@@ -53,7 +54,7 @@ public class MainStuActivity extends AppCompatActivity {
 
         searchBarContainer = findViewById(R.id.searchBarContainer);
         btnWhereToGo = findViewById(R.id.btnWhereToGo);
-//        btnNotifications = findViewById(R.id.btnNotifications);
+        btnNotifications = findViewById(R.id.btnNotifications);
         btnSettings = findViewById(R.id.btnSettings);
         bottomSheet = findViewById(R.id.bottomSheetCard);
         tvStopName = bottomSheet.findViewById(R.id.tvStopName);
@@ -70,19 +71,30 @@ public class MainStuActivity extends AppCompatActivity {
             Intent intent = new Intent(MainStuActivity.this, GetDirectionActivity.class);
             startActivity(intent);
         });
-//        btnNotifications.setOnClickListener(v -> {
-//            // Handle notification button click, e.g., start a NotificationActivity
-//            Toast.makeText(MainStuActivity.this, "Notifications clicked", Toast.LENGTH_SHORT).show();
-//        });
-        btnSettings.setOnClickListener(v -> {
-            startActivity(new Intent(MainStuActivity.this, SettingsActivity.class));
+        btnNotifications.setOnClickListener(v -> {
+            findViewById(R.id.map).setVisibility(View.GONE);
+            findViewById(R.id.searchBarContainer).setVisibility(View.GONE);
+            findViewById(R.id.bottomSheetCard).setVisibility(View.GONE);
+
+            fragmentContainer.setVisibility(View.VISIBLE);
+
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.fragmentContainer, new NotificationsFragment())
+                    .addToBackStack(null)
+                    .commit();
         });
-//        getSupportFragmentManager().addOnBackStackChangedListener(() -> {
-//            if (getSupportFragmentManager().getBackStackEntryCount() == 0) {
-////                fragmentContainer.setVisibility(View.GONE);
-//                // behavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-//            }
-//        });
+        btnSettings.setOnClickListener(v -> {
+            findViewById(R.id.map).setVisibility(View.GONE);
+            findViewById(R.id.searchBarContainer).setVisibility(View.GONE);
+            findViewById(R.id.bottomSheetCard).setVisibility(View.GONE);
+
+            fragmentContainer.setVisibility(View.VISIBLE);
+
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.fragmentContainer, new SettingsFragment())
+                    .addToBackStack(null)
+                    .commit();
+        });
 
         behavior = BottomSheetBehavior.from(bottomSheet);
         DisplayMetrics metrics = getResources().getDisplayMetrics();
@@ -103,14 +115,21 @@ public class MainStuActivity extends AppCompatActivity {
 
         // Setup RecyclerView
         rvRoutes.setLayoutManager(new LinearLayoutManager(this));
-        routeAdapter = new RouteAdapter(new ArrayList<>(), route -> {
-            Intent intent = new Intent(this, RouteScheduleActivity.class);
-            intent.putExtra(RouteScheduleActivity.EXTRA_ROUTE_ID, route.getRouteId());
+        routeStuAdapter = new RouteStuAdapter(new ArrayList<>(), route -> {
+            Intent intent = new Intent(this, RouteScheduleStuActivity.class);
+            intent.putExtra(RouteScheduleStuActivity.EXTRA_ROUTE_ID, route.getRouteId());
             startActivity(intent);
         });
-        rvRoutes.setAdapter(routeAdapter);
+        rvRoutes.setAdapter(routeStuAdapter);
 
         uploadCurrentToken();
+
+        if (getIntent() != null && getIntent().hasExtra("openFragment")) {
+            String fragmentToOpen = getIntent().getStringExtra("openFragment");
+            if ("notifications".equals(fragmentToOpen)) {
+                btnNotifications.performClick();
+            }
+        }
     }
     private void uploadCurrentToken() {
         FirebaseMessaging.getInstance().getToken()
@@ -190,7 +209,7 @@ public class MainStuActivity extends AppCompatActivity {
     }
     private void fetchRoutesForStop(RoutePoint rpoint) {
         String rpointId = rpoint.getRPointId();
-        routeAdapter.updateRoutes(new ArrayList<>());
+        routeStuAdapter.updateRoutes(new ArrayList<>());
         tvStopName.setText(rpoint.getName());
 
         Route.getAllRoutes(new Route.AllRoutesCallback() {
@@ -211,11 +230,11 @@ public class MainStuActivity extends AppCompatActivity {
                     tvRoutesTitle.setVisibility(View.VISIBLE);
                     rvRoutes.setVisibility(View.VISIBLE);
                 }
-                routeAdapter.updateRoutes(routesContainingStop);
+                routeStuAdapter.updateRoutes(routesContainingStop);
             }
             @Override
             public void onError(Exception e) {
-                routeAdapter.updateRoutes(new ArrayList<>());
+                routeStuAdapter.updateRoutes(new ArrayList<>());
                 tvEmpty.setVisibility(View.VISIBLE);
                 tvRoutesTitle.setVisibility(View.GONE);
                 rvRoutes.setVisibility(View.GONE);
@@ -230,6 +249,11 @@ public class MainStuActivity extends AppCompatActivity {
             findViewById(R.id.searchBarContainer).setVisibility(View.VISIBLE);
             findViewById(R.id.bottomSheetCard).setVisibility(View.VISIBLE);
             fragmentContainer.setVisibility(View.GONE);
+
+            if (getSupportActionBar() != null) {
+                getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+                getSupportActionBar().setDisplayShowHomeEnabled(false);
+            }
         } else {
             super.onBackPressed();
         }

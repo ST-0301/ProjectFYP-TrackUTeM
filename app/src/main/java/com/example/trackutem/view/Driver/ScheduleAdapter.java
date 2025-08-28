@@ -1,34 +1,39 @@
 package com.example.trackutem.view.Driver;
 
+import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.trackutem.R;
 import com.example.trackutem.model.Route;
 import com.example.trackutem.model.Schedule;
 import com.google.android.material.chip.Chip;
+import com.google.firebase.firestore.FirebaseFirestore;
+
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Locale;
 
 public class ScheduleAdapter extends RecyclerView.Adapter<ScheduleAdapter.ScheduleViewHolder> {
     private List<Schedule> schedules;
-    private OnScheduleClickListener listener;
+    private Context context;
 
     // Constructor
-    public ScheduleAdapter(List<Schedule> schedules, OnScheduleClickListener listener) {
+    public ScheduleAdapter(List<Schedule> schedules) {
         this.schedules = schedules;
-        this.listener = listener;
     }
 
     // Adapter Core Methods
     @NonNull
     @Override
     public ScheduleViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_schedule, parent, false);
+        context = parent.getContext();
+        View view = LayoutInflater.from(context).inflate(R.layout.item_schedule, parent, false);
         return new ScheduleViewHolder(view);
     }
     
@@ -36,71 +41,45 @@ public class ScheduleAdapter extends RecyclerView.Adapter<ScheduleAdapter.Schedu
     public void onBindViewHolder(@NonNull ScheduleViewHolder holder, int position) {
         Schedule schedule = schedules.get(position);
 
-//        String day = schedule.getDay();
-//        String chipDayText = "";
-//        if (day != null && !day.isEmpty()) {
-//            String formattedDay = day.substring(0, 1).toUpperCase() + day.substring(1);
-//
-//            String type = schedule.getType() != null ? schedule.getType() : "";
-//            String date = null;
-//            try {
-//                java.lang.reflect.Method getDateMethod = schedule.getClass().getMethod("getDate");
-//                date = (String) getDateMethod.invoke(schedule);
-//            } catch (Exception ignored) {
-//            }
-//
-//            if ("event".equalsIgnoreCase(type) && date != null && !date.isEmpty()) {
-//                chipDayText = formattedDay + " " + date;
-//            } else {
-//                chipDayText = formattedDay;
-//            }
-//            holder.chipDay.setText(chipDayText);
-//            holder.chipDay.setVisibility(View.VISIBLE);
-//        } else {
-//            holder.chipDay.setVisibility(View.GONE);
-//        }
-//        holder.tvTime.setText(schedule.getTime() != null ? schedule.getTime() : "");
-
-        // Format time
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
         String timeText = timeFormat.format(schedule.getScheduledDatetime());
         holder.tvTime.setText(timeText);
 
-        // Format day
-        SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE", Locale.getDefault());
-        String dayName = dayFormat.format(schedule.getScheduledDatetime());
-        holder.chipDay.setText(dayName);
-        holder.chipDay.setVisibility(View.VISIBLE);
+        String status = schedule.getStatus() != null ? schedule.getStatus().toLowerCase(Locale.ENGLISH) : "scheduled";
 
-        String type = schedule.getType() != null ? schedule.getType() : "";
-        if (!type.isEmpty()) {
-            type = Character.toUpperCase(type.charAt(0)) + type.substring(1);
-            holder.tvType.setText("(" + type + ")");
-            holder.tvType.setVisibility(View.VISIBLE);
+        if (status.equals("completed")) {
+            holder.chipStatus.setText("Completed");
+            holder.chipStatus.setChipBackgroundColorResource(R.color.white);
+            holder.chipStatus.setTextColor(ContextCompat.getColor(context, R.color.textPrimary));
+            holder.chipStatus.setChipStrokeWidth(1f);
+            holder.chipStatus.setChipStrokeColorResource(R.color.darkGray);
         } else {
-            holder.tvType.setVisibility(View.GONE);
+            holder.chipStatus.setTextColor(ContextCompat.getColor(context, R.color.white));
+            holder.chipStatus.setChipStrokeWidth(0f);
+
+            switch (status) {
+                case "scheduled":
+                    holder.chipStatus.setText("Start Trip");
+                    holder.chipStatus.setChipBackgroundColorResource(R.color.primaryBlue);
+                    break;
+                case "in_progress":
+                    holder.chipStatus.setText("Continue");
+                    holder.chipStatus.setChipBackgroundColorResource(R.color.tertiaryOrange);
+                    break;
+                default:
+                    holder.chipStatus.setText("Unknown");
+                    holder.chipStatus.setChipBackgroundColorResource(R.color.colorError);
+                    break;
+            }
         }
-
-        // Load route name asynchronously
-        holder.tvRoute.setText("Loading Route...");
-        Route.resolveRouteName(schedule.getRouteId(), new Route.RouteNameCallback() {
-            @Override
-            public void onSuccess(String routeName) {
-                if (holder.getAdapterPosition() == position) {
-                    holder.tvRoute.setText(routeName);
-                }
-            }
-
-            @Override
-            public void onError(Exception e) {
-                if (holder.getAdapterPosition() == position) {
-                    holder.tvRoute.setText("Route Not Found");
-                }
-            }
+        holder.tvRoute.setText(schedule.getPreloadedRouteName());
+        holder.tvBusPlate.setText(schedule.getPreloadedBusPlate());
+        holder.itemView.setOnClickListener(v -> {
+            Intent intent = new Intent(context, ScheduleDetailsActivity.class);
+            intent.putExtra("routeId", schedule.getRouteId());
+            intent.putExtra("scheduleId", schedule.getScheduleId());
+            context.startActivity(intent);
         });
-
-        holder.chipStatus.setText(schedule.getStatus() != null ? schedule.getStatus() : "scheduled");
-        holder.itemView.setOnClickListener(v -> listener.onScheduleClick(schedule));
     }
 
     @Override
@@ -114,21 +93,17 @@ public class ScheduleAdapter extends RecyclerView.Adapter<ScheduleAdapter.Schedu
 
     // ViewHolder
     static class ScheduleViewHolder extends RecyclerView.ViewHolder {
-        final TextView tvTime, tvRoute, tvType;
-        final Chip chipDay, chipStatus;
+        final TextView tvTime, tvRoute, tvBusPlate;
+        final Chip chipStatus;
 
         ScheduleViewHolder(@NonNull View itemView) {
             super(itemView);
-            chipDay = itemView.findViewById(R.id.chipDay);
             tvTime = itemView.findViewById(R.id.tvTime);
             tvRoute = itemView.findViewById(R.id.tvRoute);
-            tvType = itemView.findViewById(R.id.tvType);
+            tvBusPlate = itemView.findViewById(R.id.tvBusPlate);
             chipStatus = itemView.findViewById(R.id.chipStatus);
         }
     }
 
     // Interface
-    public interface OnScheduleClickListener {
-        void onScheduleClick(Schedule schedule);
-    }
 }

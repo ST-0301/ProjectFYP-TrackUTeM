@@ -2,6 +2,7 @@
 package com.example.trackutem.view.Driver;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,7 +12,9 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.trackutem.R;
+import com.example.trackutem.model.RoutePoint;
 import com.example.trackutem.model.Schedule;
+import com.google.android.gms.maps.model.LatLng;
 import java.util.List;
 
 public class RPointsTimelineAdapter extends RecyclerView.Adapter<RPointsTimelineAdapter.ViewHolder> {
@@ -19,6 +22,7 @@ public class RPointsTimelineAdapter extends RecyclerView.Adapter<RPointsTimeline
     private final List<String> rpointList;
     private List<Schedule.RPointDetail> rpointDetails;
     private OnActionButtonClickListener listener;
+    private OnRPointClickListener rpointClickListener;
     private int currentRPointIndex = -1;
 
     public RPointsTimelineAdapter(Context context, List<String> rpointList) {
@@ -52,7 +56,7 @@ public class RPointsTimelineAdapter extends RecyclerView.Adapter<RPointsTimeline
         if (rpointDetails != null && position < rpointDetails.size()) {
             Schedule.RPointDetail rpoint = rpointDetails.get(position);
 
-            holder.tvExpDepTime.setText(rpoint.getPlanTime());
+            holder.tvPlanTime.setText(rpoint.getPlanTime());
 
             boolean showButton = (position == currentRPointIndex && "departed".equals(rpoint.getStatus()) && (currentRPointIndex != -1));
             holder.btnArrival.setVisibility(showButton ? View.VISIBLE : View.GONE);
@@ -62,7 +66,6 @@ public class RPointsTimelineAdapter extends RecyclerView.Adapter<RPointsTimeline
                 case "arrived":
                     holder.rpointIndicator.setImageResource(R.drawable.ic_arrived);
                     holder.btnArrival.setVisibility(View.GONE);
-//                    holder.btnArrival.setVisibility(showButton ? View.VISIBLE : View.GONE);
                     break;
                 case "departed":
                     holder.rpointIndicator.setImageResource(R.drawable.ic_departed);
@@ -84,11 +87,28 @@ public class RPointsTimelineAdapter extends RecyclerView.Adapter<RPointsTimeline
             }
         } else {
             // If no rpointDetails or out of bounds, hide dynamic elements
-            holder.tvExpDepTime.setVisibility(View.GONE);
+            holder.tvPlanTime.setVisibility(View.GONE);
             holder.tvLateness.setVisibility(View.GONE);
             holder.btnArrival.setVisibility(View.GONE);
             holder.rpointIndicator.setImageResource(R.drawable.ic_location);
         }
+
+        holder.itemView.setOnClickListener(v -> {
+            if (rpointClickListener != null && rpointDetails != null && position < rpointDetails.size()) {
+                String rpointId = rpointDetails.get(position).getRpointId();
+                new RoutePoint().getRPointLocationById(rpointId, new RoutePoint.RPointLocationCallback() {
+                    @Override
+                    public void onSuccess(LatLng location) {
+                        rpointClickListener.onRPointClick(position, location);
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        Log.e("RPointClick", "Error getting location: " + e.getMessage());
+                    }
+                });
+            }
+        });
     }
     @Override
     public int getItemCount() {
@@ -104,7 +124,7 @@ public class RPointsTimelineAdapter extends RecyclerView.Adapter<RPointsTimeline
         TextView tvRPointName;
         ImageView rpointIndicator;
         TextView tvLateness;
-        TextView tvExpDepTime;
+        TextView tvPlanTime;
         Button btnArrival;
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -112,7 +132,7 @@ public class RPointsTimelineAdapter extends RecyclerView.Adapter<RPointsTimeline
             rpointIndicator = itemView.findViewById(R.id.rpointIndicator);
 
             tvLateness = itemView.findViewById(R.id.tvLateness);
-            tvExpDepTime = itemView.findViewById(R.id.tvExpDepTime);
+            tvPlanTime = itemView.findViewById(R.id.tvPlanTime);
             btnArrival = itemView.findViewById(R.id.btnArrival);
         }
     }
@@ -122,5 +142,11 @@ public class RPointsTimelineAdapter extends RecyclerView.Adapter<RPointsTimeline
     }
     public void setOnActionButtonClickListener(OnActionButtonClickListener listener) {
         this.listener = listener;
+    }
+    public interface OnRPointClickListener {
+        void onRPointClick(int position, LatLng location);
+    }
+    public void setOnRPointClickListener(OnRPointClickListener listener) {
+        this.rpointClickListener = listener;
     }
 }

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primaryBlue">#2563EB</color>  <!-- Vibrant, Energetic Blue (Trust) -->
+    <color name="primaryBlue">#1D58CA</color>
     <color name="modernPurple">#7C3AED</color>  <!-- Modern medium purple -->
     <color name="secondaryGreen">#16A34A</color>  <!-- Deep Green (Eco-friendly) -->
     <color name="tertiaryOrange">#F59E0B</color>  <!-- Orange (Highlights) -->
@@ -20,9 +20,10 @@
 
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="lightWhite">#F5F5F5</color>
 
     <color name="status_scheduled">#2196F3</color>  <!-- Blue -->
     <color name="status_in_progress">#4CAF50</color> <!-- Green -->
     <color name="status_completed">#9E9E9E</color>  <!-- Gray -->
-    <color name="status_cancelled">#F44336</color>  <!-- Red -->
+    <color name="status_cancelled_delayed">#F44336</color>  <!-- Red -->
 </resources>

@@ -4,11 +4,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginStart="16dp"
-    android:layout_marginTop="8dp"
-    android:layout_marginEnd="16dp"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="8dp"
     android:clickable="true"
-    android:focusable="true">
+    android:focusable="true"
+    app:cardBackgroundColor="@color/lightWhite"
+    app:cardElevation="2dp" >
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -21,68 +22,54 @@
             android:layout_height="8dp"
             android:layout_marginEnd="8dp"
             android:background="@drawable/shape_unread_indicator"
-            app:layout_constraintEnd_toStartOf="@+id/titleTextView"
+            app:layout_constraintEnd_toStartOf="@+id/tvTitle"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/titleTextView" />
+            app:layout_constraintTop_toTopOf="@+id/tvTitle" />
 
         <TextView
-            android:id="@+id/titleTextView"
+            android:id="@+id/tvTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="8dp"
             android:textStyle="bold"
             android:textAppearance="?attr/textAppearanceBody1"
-            app:layout_constraintEnd_toStartOf="@+id/timestampTextView"
+            app:layout_constraintEnd_toStartOf="@+id/tvTimestamp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             tools:text="Schedule Update" />
 
         <TextView
-            android:id="@+id/timestampTextView"
+            android:id="@+id/tvTimestamp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?attr/textAppearanceCaption"
-            app:layout_constraintBottom_toBottomOf="@+id/titleTextView"
+            app:layout_constraintBottom_toBottomOf="@+id/tvTitle"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/titleTextView"
+            app:layout_constraintTop_toTopOf="@+id/tvTitle"
             tools:text="1 hour ago" />
 
         <TextView
-            android:id="@+id/bodyTextView"
+            android:id="@+id/tvBody"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:textAppearance="?attr/textAppearanceBody2"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="@+id/titleTextView"
-            app:layout_constraintTop_toBottomOf="@+id/titleTextView"
+            app:layout_constraintStart_toStartOf="@+id/tvTitle"
+            app:layout_constraintTop_toBottomOf="@+id/tvTitle"
             tools:text="Your 9AM route was cancelled. Check your new schedule for details." />
 
         <TextView
-            android:id="@+id/detailsTextView"
+            android:id="@+id/tvDetails"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:textAppearance="?attr/textAppearanceCaption"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="@+id/titleTextView"
-            app:layout_constraintTop_toBottomOf="@+id/bodyTextView"
-            tools:text="Kampus Ke Pusat Bandar (ABC123)" />
-
-        <ImageButton
-            android:id="@+id/deleteButton"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="8dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Delete notification"
-            android:src="@drawable/ic_delete"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/detailsTextView"
-            app:tint="?attr/colorOnSurface" />
+            app:layout_constraintStart_toStartOf="@+id/tvTitle"
+            app:layout_constraintTop_toBottomOf="@+id/tvBody"
+            tools:text="Route: Kampus → Pusat Bandar (incampus) | Bus: MAB123 | Departure 09:00" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-
 </com.google.android.material.card.MaterialCardView>

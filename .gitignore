@@ -14,3 +14,8 @@
 .cxx
 local.properties
 keys.properties
+*.jks
+*.keystore
+*.apk
+*.aab
+app/release/

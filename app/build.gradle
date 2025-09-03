@@ -12,6 +12,15 @@ android {
     namespace 'com.example.trackutem'
     compileSdk 35
 
+    signingConfigs {
+        release {
+            storeFile file('trackutem.keystore.jks')
+            storePassword keysProperties['KEYSTORE_PASSWORD']
+            keyAlias keysProperties['KEY_ALIAS']
+            keyPassword keysProperties['KEY_PASSWORD']
+        }
+    }
+
     defaultConfig {
         applicationId "com.example.trackutem"
         minSdk 24
@@ -27,6 +36,7 @@ android {
 
     buildTypes {
         release {
+            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }

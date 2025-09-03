@@ -63,7 +63,7 @@ public class ScheduleAdapter extends RecyclerView.Adapter<ScheduleAdapter.Schedu
                     holder.chipStatus.setChipBackgroundColorResource(R.color.primaryBlue);
                     break;
                 case "in_progress":
-                    holder.chipStatus.setText("Continue");
+                    holder.chipStatus.setText("In Progress");
                     holder.chipStatus.setChipBackgroundColorResource(R.color.tertiaryOrange);
                     break;
                 default:

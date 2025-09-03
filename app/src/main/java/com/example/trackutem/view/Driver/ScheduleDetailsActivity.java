@@ -50,6 +50,7 @@ import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.ArrayList;
@@ -199,20 +200,27 @@ public class ScheduleDetailsActivity extends AppCompatActivity {
         floatingBackButton.setOnClickListener(v -> onBackPressed());
 
         btnStart.setOnClickListener(v -> {
-            View root = findViewById(R.id.rootContainer);
-            if (root instanceof ViewGroup) {
-                TransitionManager.beginDelayedTransition((ViewGroup) root);
-            }
+            checkForInProgressSchedules(inProgressScheduleId -> {
+                if (inProgressScheduleId != null && !inProgressScheduleId.equals(scheduleId)) {
+                    Toast.makeText(this, "You already have an in-progress trip today", Toast.LENGTH_LONG).show();
+                    btnStart.setVisibility(View.GONE);
+                } else {
+                    View root = findViewById(R.id.rootContainer);
+                    if (root instanceof ViewGroup) {
+                        TransitionManager.beginDelayedTransition((ViewGroup) root);
+                    }
 
-            btnStart.setVisibility(View.GONE);
-            btnStop.setVisibility(View.VISIBLE);
+                    btnStart.setVisibility(View.GONE);
+                    btnStop.setVisibility(View.VISIBLE);
 
-            currentDriver.updateDriverStatus(driverId, "on_duty");
-            currentDriver.updateDriverCurrentSchedule(driverId, scheduleId);
+                    currentDriver.updateDriverStatus(driverId, "on_duty");
+                    currentDriver.updateDriverCurrentSchedule(driverId, scheduleId);
 
-            startService(new Intent(this, TrackingService.class));
-            appStateManager.saveState("start", true);
-            startTrip();
+                    startService(new Intent(this, TrackingService.class));
+                    appStateManager.saveState("start", true);
+                    startTrip();
+                }
+            });
         });
 
         btnStop.setOnClickListener(v -> endTrip());
@@ -228,6 +236,66 @@ public class ScheduleDetailsActivity extends AppCompatActivity {
         }
 
         checkPermissions();
+    }
+    private void checkForInProgressSchedules(Consumer<String> callback) {
+        if (driverId == null || currentSchedule == null || currentSchedule.getScheduledDatetime() == null) {
+            callback.accept(null);
+            return;
+        }
+
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(currentSchedule.getScheduledDatetime());
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        Date startOfDay = cal.getTime();
+
+        cal.set(Calendar.HOUR_OF_DAY, 23);
+        cal.set(Calendar.MINUTE, 59);
+        cal.set(Calendar.SECOND, 59);
+        cal.set(Calendar.MILLISECOND, 999);
+        Date endOfDay = cal.getTime();
+
+        FirebaseFirestore.getInstance().collection("busDriverPairings")
+                .whereEqualTo("driverId", driverId)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<String> busDriverPairIds = new ArrayList<>();
+                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                        busDriverPairIds.add(document.getId());
+                    }
+
+                    if (busDriverPairIds.isEmpty()) {
+                        callback.accept(null);
+                        return;
+                    }
+
+                    FirebaseFirestore.getInstance().collection("schedules")
+                            .whereIn("busDriverPairId", busDriverPairIds)
+                            .whereEqualTo("status", "in_progress")
+                            .whereGreaterThanOrEqualTo("scheduledDatetime", startOfDay)
+                            .whereLessThanOrEqualTo("scheduledDatetime", endOfDay)
+                            .get()
+                            .addOnSuccessListener(scheduleQuerySnapshot -> {
+                                String inProgressScheduleId = null;
+                                if (!scheduleQuerySnapshot.isEmpty()) {
+                                    // Get the first in-progress schedule
+                                    DocumentSnapshot document = scheduleQuerySnapshot.getDocuments().get(0);
+                                    inProgressScheduleId = document.getId();
+                                }
+                                callback.accept(inProgressScheduleId);
+
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e("InProgressCheck", "Error checking in-progress schedules", e);
+                                callback.accept(null);
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("InProgressCheck", "Error getting bus driver pairings", e);
+                    callback.accept(null);
+                });
     }
     private void endTrip() {
         currentDriver.updateDriverCurrentSchedule(driverId, null);
@@ -607,6 +675,21 @@ public class ScheduleDetailsActivity extends AppCompatActivity {
                             adapter.setCurrentRPointIndex(currentRPointIndex);
                             adapter.notifyDataSetChanged();
                         });
+                        if ("in_progress".equals(currentSchedule.getStatus())) {
+                            btnStart.setVisibility(View.GONE);
+                            btnStop.setVisibility(View.VISIBLE);
+                        } else {
+                            checkForInProgressSchedules(inProgressScheduleId -> {
+                                if (inProgressScheduleId != null && !inProgressScheduleId.equals(scheduleId)) {
+                                    btnStart.setVisibility(View.GONE);
+                                    Toast.makeText(this,
+                                            "You already have an in-progress trip today",
+                                            Toast.LENGTH_LONG).show();
+                                } else {
+                                    btnStart.setVisibility(View.VISIBLE);
+                                }
+                            });
+                        }
                     }
                 });
     }
@@ -684,10 +767,21 @@ public class ScheduleDetailsActivity extends AppCompatActivity {
         btnStart.setVisibility(View.GONE);
         btnStop.setVisibility(View.GONE);
 
-        if (buttonState.equals("start")) {
+        if (currentSchedule != null && "in_progress".equals(currentSchedule.getStatus())) {
             btnStop.setVisibility(View.VISIBLE);
-        } else {
+        } else if (buttonState.equals("start") && isTracking) {
             btnStart.setVisibility(View.VISIBLE);
+        } else {
+            checkForInProgressSchedules(inProgressScheduleId -> {
+                if (inProgressScheduleId != null && !inProgressScheduleId.equals(scheduleId)) {
+                    btnStart.setVisibility(View.GONE);
+                    Toast.makeText(this,
+                            "You already have an in-progress trip today",
+                            Toast.LENGTH_LONG).show();
+                } else {
+                    btnStart.setVisibility(View.VISIBLE);
+                }
+            });
         }
         if (isTracking) {
             startService(new Intent(this, TrackingService.class));

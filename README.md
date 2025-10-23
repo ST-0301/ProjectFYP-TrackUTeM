@@ -106,7 +106,7 @@ The project uses a shared Firebase backend with the web admin panel. The data is
 | `/routePoints` | Stores the specific geographic coordinates (stops) for each route. |
 | `/schedules` | Manages the bus schedules, linking routes, buses, and times. |
 | `/busDriverPairings` | Tracks the real-time assignment of a specific driver to a specific bus. |
-| `/users` | Stores student user accounts (if login is required). |
+| `/students` | Stores student user accounts. |
 
 **Note:** You do not need to manually create these collections. Firestore will automatically create them when the first document is added by the application.
 
